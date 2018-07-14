@@ -3,9 +3,9 @@
 \file oid.c
 \brief Object identifiers
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
-\version 2015.04.14
+\version 2015.11.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -15,6 +15,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/mem.h"
 #include "bee2/core/oid.h"
 #include "bee2/core/str.h"
+#include "bee2/core/u32.h"
 #include "bee2/core/util.h"
 
 /*
@@ -23,10 +24,10 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-static size_t oidSIDEncode(octet* buf, uint32 val)
+static size_t oidSIDEncode(octet* buf, u32 val)
 {
 	size_t count = 0;
-	uint32 t = val;
+	u32 t = val;
 	// длина BER-кода
 	if (val)
 		for (; t; t >>= 7, count++);
@@ -43,10 +44,10 @@ static size_t oidSIDEncode(octet* buf, uint32 val)
 	return count;
 }
 
-static size_t oidSIDDecode(char* oid, uint32 val)
+static size_t oidSIDDecode(char* oid, u32 val)
 {
 	size_t count = 0;
-	uint32 t = val;
+	u32 t = val;
 	// число символов для val
 	do
 		t /= 10, count++;
@@ -65,13 +66,15 @@ static size_t oidSIDDecode(char* oid, uint32 val)
 /*
 *******************************************************************************
 Проверка
+
+\remark d1 инициализируется для подавления предупреждения компилятора.
 *******************************************************************************
 */
 
 bool_t oidIsValid(const char* oid)
 {
-	uint32 val = 0;
-	uint32 d1;
+	u32 val = 0;
+	u32 d1 = 0;
 	size_t pos = 0;
 	size_t n = 0;
 	// pre
@@ -84,7 +87,7 @@ bool_t oidIsValid(const char* oid)
 		if (oid[pos] == '.' || oid[pos] == '\0')
 		{
 			// пустое число? d1 > 2? d1 < 2 && d2 >= 40?
-			// 40 * d1 + d2 не укладывается в uint32?
+			// 40 * d1 + d2 не укладывается в u32?
 			if (pos == 0 ||
 				n == 0 && val > 2 ||
 				n == 1 && d1 < 2 && val >= 40 ||
@@ -109,7 +112,7 @@ bool_t oidIsValid(const char* oid)
 		if (oid[pos] < '0' || oid[pos] > '9' ||
 			pos == 1 && oid[0] == '0' ||
 			val > U32_MAX / 10 ||
-			val == U32_MAX / 10 && (uint32)(oid[pos] - '0') > U32_MAX % 10)
+			val == U32_MAX / 10 && (u32)(oid[pos] - '0') > U32_MAX % 10)
 		{
 			n = 0;
 			break;
@@ -132,8 +135,8 @@ bool_t oidIsValid(const char* oid)
 
 size_t oidToDER(octet der[], const char* oid)
 {
-	uint32 d1;
-	uint32 val = 0;
+	u32 d1;
+	u32 val = 0;
 	size_t pos = 0;
 	size_t count = 0;
 	// корректен?
@@ -180,11 +183,11 @@ size_t oidToDER(octet der[], const char* oid)
 
 size_t oidFromDER(char* oid, const octet der[], size_t count)
 {
-	uint32 d1 = 3;
-	uint32 val = 0;
+	u32 d1 = 3;
+	u32 val = 0;
 	size_t pos = 0;
 	size_t len = 0;
-	uint32 tag;
+	u32 tag;
 	// некорректный буфер? некорректный тег?
 	if (!memIsValid(der, count) || count == 0)
 		return SIZE_MAX;

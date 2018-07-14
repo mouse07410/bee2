@@ -3,9 +3,9 @@
 \file rng.c
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2015.06.05
+\version 2017.01.11
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -20,9 +20,9 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/tm.h"
 #include "bee2/core/rng.h"
 #include "bee2/core/util.h"
+#include "bee2/core/word.h"
 #include "bee2/crypto/belt.h"
 #include "bee2/crypto/brng.h"
-#include "bee2/math/word.h"
 #include "bee2/math/ww.h"
 
 /*
@@ -35,10 +35,13 @@ version 3. See Copyright Notices in bee2/info.h.
 -	по материалам https://software.intel.com/en-us/articles/
 	intel-digital-random-number-generator-drng-software-implementation-guide.
 
+Используется команда rdrand -- с криптографической постобработкой.
+В команде rdseed постобработка не выполняется. Эту команда предпочтительнее,
+но ее не поддерживают многие версии gcc.
+
 \todo Протестировать.
 
-\todo Используется rdrand (криптографическая постобработка), 
-хотя можно попробовать и rdseed.
+\todo Некоторые сборки gcc не поддерживают ассемблерную команду rdseed.
 *******************************************************************************
 */
 
@@ -48,7 +51,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 static bool_t rngHasTRNG()
 {
-	uint32 info[4];
+	u32 info[4];
 	// Intel?
 	__cpuid((int*)info, 0);
 	if (!memEq(info + 1, "Genu", 4) ||
@@ -61,10 +64,11 @@ static bool_t rngHasTRNG()
 }
 
 #define rdrand_eax	__asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF0
+#define rdseed_eax	__asm _emit 0x0F __asm _emit 0xC7 __asm _emit 0xF8
 
 static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 {
-	word* rand = (word*)buf;
+	u32* rand = (u32*)buf;
 	size_t i;
 	// pre
 	ASSERT(memIsValid(read, sizeof(size_t)));
@@ -79,9 +83,9 @@ static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 		return ERR_OK;
 	}
 	// генерация
-	for (i = 0; i < count; i += O_PER_W, ++rand)
+	for (i = 0; i < count; i += 4, ++rand)
 	{
-		if (i + O_PER_W > count)
+		if (i + 4 > count)
 		{
 			i -= count - O_PER_W;
 			rand = (word*)((octet*)buf + i);
@@ -106,7 +110,7 @@ rngSeedTRNG_break:
 
 static bool_t rngHasTRNG()
 {
-	uint32 info[4];
+	u32 info[4];
 	// Intel?
 	__cpuid(0, info[0], info[1], info[2], info[3]);
 	if (!memEq(info + 1, "Genu", 4) ||
@@ -120,7 +124,7 @@ static bool_t rngHasTRNG()
 
 static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 {
-	word* rand = (word*)buf;
+	u32* rand = (u32*)buf;
 	size_t i;
 	octet ok;
 	// pre
@@ -136,14 +140,14 @@ static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 		return ERR_OK;
 	}
 	// генерация
-	for (i = 0; i < count; i += O_PER_W, ++rand)
+	for (i = 0; i < count; i += 4, ++rand)
 	{
-		if (i + O_PER_W > count)
+		if (i + 4 > count)
 		{
-			i -= count - O_PER_W;
-			rand = (word*)((octet*)buf + i);
+			i -= count - 4;
+			rand = (u32*)((octet*)buf + i);
 		}
-		asm volatile ("rdrand %0; setc %1" : "=r" (*rand), "=qm" (ok));
+		asm volatile("rdrand %0; setc %1" : "=r" (*rand), "=qm" (ok));
 		if (!ok)
 			break;
 	}
@@ -189,6 +193,9 @@ static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 \warning [Jessie Walker]: наблюдения зависимы, модель AR(1).
 
 \todo Полноценная оценка энтропии.
+
+\todo Остановка на Windows, если параллельно запущено несколько ресурсоемких
+процессов.
 *******************************************************************************
 */
 
@@ -260,7 +267,7 @@ dev/urandom. Это неблокирующий источник, который 
 *******************************************************************************
 */
 
-#if defined OS_WINDOWS
+#if defined OS_WIN
 
 #include <windows.h>
 #include <wincrypt.h>
@@ -301,7 +308,7 @@ static err_t rngReadSys(size_t* read, void* buf, size_t count)
 	ASSERT(memIsValid(buf, count));
 	fp = fopen("/dev/urandom", "r");
 	if (!fp)
-		return ERR_OPEN_FAILED;
+		return ERR_FILE_OPEN;
 	*read = fread(buf, 1, count, fp);
 	fclose(fp);
 	return ERR_OK;
@@ -335,7 +342,7 @@ bool_t rngTestFIPS1(const octet buf[2500])
 	{
 		word w;
 		--count;
-		memToWord(&w, buf + O_OF_W(count), 2500 - O_OF_W(count));
+		wwFrom(&w, buf + O_OF_W(count), 2500 - O_OF_W(count));
 		s = wordWeight(w);
 	}
 	while (count--)
@@ -345,7 +352,7 @@ bool_t rngTestFIPS1(const octet buf[2500])
 
 bool_t rngTestFIPS2(const octet buf[2500])
 {
-	uint32 s[16];
+	u32 s[16];
 	size_t i = 2500;
 	size_t s1 = 0;
 	ASSERT(memIsValid(buf, 2500));
@@ -432,25 +439,26 @@ err_t rngReadSource(size_t* read, void* buf, size_t count,
 /*
 *******************************************************************************
 Создание / закрытие генератора
+
+\warning CoverityScan выдает предупреждение по функции rngCreate(): 
+	"Call to RngReadSource might sleep while holding lock _mtx".
+См. пояснения в комментариях к функции rngStepR().
 *******************************************************************************
 */
 
 typedef struct 
 {
-	obj_hdr_t hdr;				/*< заголовок */
-// ptr_table {
-	octet* alg_state;			/*< [MAX(beltHash_keep(), brngCTR_keep())] */
-// }
-	octet data[32];				/*< данные */
-} rng_state_o;
+	octet block[32];			/*< дополнительные данные brngCTR */
+	octet alg_state[];			/*< [MAX(beltHash_keep(), brngCTR_keep())] */
+} rng_state_st;
 
 static size_t _lock;			/*< счетчик блокировок */
 static mt_mtx_t _mtx[1];		/*< мьютекс */
-static rng_state_o* _state;		/*< состояние */
+static rng_state_st* _state;	/*< состояние */
 
 size_t rngCreate_keep()
 {
-	return sizeof(rng_state_o) + MAX2(beltHash_keep(), brngCTR_keep());
+	return sizeof(rng_state_st) + MAX2(beltHash_keep(), brngCTR_keep());
 }
 
 err_t rngCreate(read_i source, void* source_state)
@@ -465,53 +473,50 @@ err_t rngCreate(read_i source, void* source_state)
 	}
 	// создать мьютекс и заблокировать его
 	if (!mtMtxCreate(_mtx))
-		return ERR_CANNOT_MAKE;
+		return ERR_FILE_CREATE;
 	mtMtxLock(_mtx);
 	// создать состояние
-	_state = (rng_state_o*)blobCreate(rngCreate_keep());
+	_state = (rng_state_st*)blobCreate(rngCreate_keep());
 	if (!_state)
 	{
+		mtMtxUnlock(_mtx);
 		mtMtxClose(_mtx);
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	}
-	// раскладка состояния
-	_state->hdr.keep = rngCreate_keep();
-	_state->hdr.p_count = 1;
-	_state->hdr.o_count = 0;
-	_state->alg_state = _state->data + 32;
 	// опрос источников случайности
 	count = 0;
 	beltHashStart(_state->alg_state);
-	if (rngReadSource(&read, _state->data, 32, "trng") == ERR_OK)
+	if (rngReadSource(&read, _state->block, 32, "trng") == ERR_OK)
 	{
-		beltHashStepH(_state->data, read, _state->alg_state);
+		beltHashStepH(_state->block, read, _state->alg_state);
 		count += read;
 	}
-	if (rngReadSource(&read, _state->data, 32, "timer") == ERR_OK)
+	if (rngReadSource(&read, _state->block, 32, "timer") == ERR_OK)
 	{
-		beltHashStepH(_state->data, read, _state->alg_state);
+		beltHashStepH(_state->block, read, _state->alg_state);
 		count += read;
 	}
-	if (rngReadSource(&read, _state->data, 32, "sys") == ERR_OK)
+	if (rngReadSource(&read, _state->block, 32, "sys") == ERR_OK)
 	{
-		beltHashStepH(_state->data, read, _state->alg_state);
+		beltHashStepH(_state->block, read, _state->alg_state);
 		count += read;
 	}
-	if (source && source(&read, _state->data, 32, source_state) == ERR_OK)
+	if (source && source(&read, _state->block, 32, source_state) == ERR_OK)
 	{
-		beltHashStepH(_state->data, read, _state->alg_state);
+		beltHashStepH(_state->block, read, _state->alg_state);
 		count += read;
 	}
 	if (count < 32)
 	{
 		blobClose(_state);
+		mtMtxUnlock(_mtx);
 		mtMtxClose(_mtx);
-		return ERR_INSUFFICIENT_ENTROPY;
+		return ERR_BAD_ENTROPY;
 	}
 	// создать brngCTR
-	beltHashStepG(_state->data, _state->alg_state);
-	brngCTRStart(_state->alg_state, _state->data, 0);
-	memSetZero(_state->data, 32);
+	beltHashStepG(_state->block, _state->alg_state);
+	brngCTRStart(_state->alg_state, _state->block, 0);
+	memSetZero(_state->block, 32);
 	// завершение
 	_lock = 1;
 	mtMtxUnlock(_mtx);
@@ -540,29 +545,57 @@ void rngClose()
 /*
 *******************************************************************************
 Генерация
+
+\warning CoverityScan выдает предупреждение по функции rngStepR(): 
+	"Call to RngReadSource might sleep while holding lock _mtx"
+с объяснениями: 
+	"The lock will prevent other threads from making progress for 
+	an indefinite period of time; may be mistaken for deadlock. In rngStepR: 
+	A lock is held while waiting for a long running or blocking operation 
+	to complete (CWE-667)".
+Проблема в том, что в источнике timer многократно вызывается 
+функция mtSleep(0).
 *******************************************************************************
 */
 
-void rngStepG(void* buf, size_t count, void* state)
+void rngStepR2(void* buf, size_t count, void* state)
 {
-	size_t read;
+	ASSERT(rngIsValid());
+	mtMtxLock(_mtx);
+	brngCTRStepR(buf, count, _state->alg_state);
+	mtMtxUnlock(_mtx);
+}
+
+void rngStepR(void* buf, size_t count, void* state)
+{
+	octet* buf1;
+	size_t read, t;
 	ASSERT(rngIsValid());
 	// блокировать генератор
 	mtMtxLock(_mtx);
-	// опросить источники случайности
+	// опросить trng
 	if (rngReadSource(&read, buf, count, "trng") != ERR_OK)
 		read = 0;
+	// опросить timer
 	if (read < count)
 	{
-		octet* buf1 = (octet*)buf + read;
-		size_t t;
+		buf1 = (octet*)buf + read;
 		if (rngReadSource(&t, buf1, count - read, "timer") != ERR_OK)
 			t = 0;
-		if ((read += t) < count)
-			rngReadSource(&t, buf1 + t, count - read, "sys");
+		read += t;
+	}
+	// опросить sys
+	if (read < count)
+	{
+		buf1 = (octet*)buf + read;
+		// проверка возврата снимает претензии сканеров
+		if (rngReadSource(&t, buf1, count - read, "sys") != ERR_OK)
+			t = 0;
+		read += t;
 	}
 	// генерация
 	brngCTRStepR(buf, count, _state->alg_state);
+	read = t = 0, buf1 = 0;
 	// снять блокировку
 	mtMtxUnlock(_mtx);
 }

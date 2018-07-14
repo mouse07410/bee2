@@ -3,15 +3,18 @@
 \file util.c
 \brief Utilities
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.05.10
-\version 2015.04.25
+\version 2017.10.14
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
+#include <assert.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "bee2/info.h"
 #include "bee2/core/mem.h"
 #include "bee2/core/tm.h"
@@ -26,6 +29,21 @@ version 3. See Copyright Notices in bee2/info.h.
 const char* utilVersion()
 {
 	return BEE2_VERSION;
+}
+
+/*
+*******************************************************************************
+Assert
+*******************************************************************************
+*/
+
+void utilAssert(int b, const char* file, int line)
+{
+	if (!b)
+	{
+		fprintf(stderr, "Assertion in %s::%d\n", file, line);
+		abort();
+	}
 }
 
 /*
@@ -76,7 +94,7 @@ CRC32
 \code
 	void make_crc32_table()
 	{
-		uint32 x, y;
+		u32 x, y;
 		size_t i;
 		for (x = 0; x < 256; ++x)
 		{
@@ -89,7 +107,7 @@ CRC32
 *******************************************************************************
 */
 
-static const uint32 crc32_table[] = {
+static const u32 crc32_table[] = {
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
 	0xe963a535, 0x9e6495a3,	0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
 	0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91, 0x1db71064, 0x6ab020f2,
@@ -135,12 +153,10 @@ static const uint32 crc32_table[] = {
 	0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d,
 };
 
-uint32 utilCRC32(const void* buf, size_t count, uint32 state)
+u32 utilCRC32(const void* buf, size_t count, u32 state)
 {
 	const octet* octets = (const octet*)buf;
-	state = state ^ 0xFFFFFFFF;
-
-	while (count--)
+	for (state ^= 0xFFFFFFFF; count--; )
 		state = crc32_table[(state ^ *octets++) & 0xFF] ^ (state >> 8);
 	return state ^ 0xFFFFFFFF;
 }
@@ -154,7 +170,7 @@ FNV32
 *******************************************************************************
 */
 
-uint32 utilFNV32(const void* buf, size_t count, uint32 state)
+u32 utilFNV32(const void* buf, size_t count, u32 state)
 {
 	const octet* octets = (const octet*)buf;
 	while (count--)
@@ -172,11 +188,11 @@ uint32 utilFNV32(const void* buf, size_t count, uint32 state)
 *******************************************************************************
 */
 
-uint32 utilNonce32()
+u32 utilNonce32()
 {
 	tm_time_t curtime;
 	tm_ticks_t curticks;
-	register uint32 state = 2166136261u;
+	register u32 state = 2166136261u;
 	// UNIX-время
 	curtime = tmTime();
 	state = utilFNV32(&curtime, sizeof(curtime), state);

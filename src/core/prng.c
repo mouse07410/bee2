@@ -3,9 +3,9 @@
 \file prng.c
 \brief Pseudorandom number generators
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.05.02
-\version 2015.04.25
+\version 2016.07.15
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -13,9 +13,8 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #include "bee2/core/mem.h"
 #include "bee2/core/prng.h"
+#include "bee2/core/u32.h"
 #include "bee2/core/util.h"
-#include "bee2/math/word.h"
-
 
 /*
 *******************************************************************************
@@ -31,11 +30,11 @@ version 3. See Copyright Notices in bee2/info.h.
 */
 
 typedef struct {
-	uint32 x;			/*< параметр x */
-	uint32 y;			/*< параметр y */
-	uint32 z;			/*< параметр z */
+	u32 x;			/*< параметр x */
+	u32 y;			/*< параметр y */
+	u32 z;			/*< параметр z */
 	union {
-		uint32 u32;
+		u32 u32;
 		octet block[4];
 	} r;				/*< псевдослучайное данные */
 	size_t reserved;	/*< резерв октетов в r.block */
@@ -49,7 +48,7 @@ static void prngCOMBOStep(prng_combo_st* s)
 	s->z = (s->z & 0xFFFF) * 30903 + (s->z >> 16);
 	s->r.u32 += s->z;
 #if (OCTET_ORDER == BIG_ENDIAN)
-	s->r.u32 = wordRevU32(s->r.u32);
+	s->r.u32 = u32Rev(s->r.u32);
 #endif
 }
 
@@ -58,7 +57,7 @@ size_t prngCOMBO_keep()
 	return sizeof(prng_combo_st);
 }
 
-void prngCOMBOStart(void* state, uint32 seed)
+void prngCOMBOStart(void* state, u32 seed)
 {
 	prng_combo_st* s = (prng_combo_st*)state;
 	ASSERT(memIsValid(s, sizeof(*s)));
@@ -70,7 +69,7 @@ void prngCOMBOStart(void* state, uint32 seed)
 	s->reserved = 0;
 }
 
-void prngCOMBOStepG(void* buf, size_t count, void* state)
+void prngCOMBOStepR(void* buf, size_t count, void* state)
 {
 	prng_combo_st* s = (prng_combo_st*)state;
 	ASSERT(memIsValid(buf, count));
@@ -136,7 +135,7 @@ void prngEchoStart(void* state, const void* seed, size_t seed_len)
 	s->pos = 0;
 }
 
-void prngEchoStepG(void* buf, size_t count, void* state)
+void prngEchoStepR(void* buf, size_t count, void* state)
 {
 	prng_echo_st* s = (prng_echo_st*)state;
 	ASSERT(memIsValid(s, sizeof(prng_echo_st)));
@@ -161,11 +160,11 @@ void prngEchoStepG(void* buf, size_t count, void* state)
 
 typedef struct
 {
-	size_t i;			/*< счетчик */
-	uint16 z[31];		/*< числа z_i */
-	uint16 v;			/*< числа v_i */
-	uint16 w;			/*< числа w_i */
-	uint16 u;			/*< числа u_i */
+	size_t i;		/*< счетчик */
+	u16 z[31];		/*< числа z_i */
+	u16 v;			/*< числа v_i */
+	u16 w;			/*< числа w_i */
+	u16 u;			/*< числа u_i */
 } prng_stb_st;
 
 size_t prngSTB_keep()
@@ -193,7 +192,7 @@ static void _prngSTBClock(prng_stb_st* s)
 	s->i = (s->i + 1) % 31;
 }
 
-void prngSTBStart(void* state, const uint16 z[31])
+void prngSTBStart(void* state, const u16 z[31])
 {
 	prng_stb_st* s = (prng_stb_st*)state;
 	size_t i;
@@ -203,7 +202,7 @@ void prngSTBStart(void* state, const uint16 z[31])
 	// загрузить z
 	for (i = 0; i < 31; ++i)
 	{
-		s->z[i] = z ? z[i] : (uint16)(i + 1);
+		s->z[i] = z ? z[i] : (u16)(i + 1);
 		ASSERT(s->z[i] > 0 && s->z[i] < 65257);
 	}
 	// настроить состояние
@@ -214,9 +213,9 @@ void prngSTBStart(void* state, const uint16 z[31])
 		_prngSTBClock(s);
 }
 
-void prngSTBStepG(void* buf, size_t count, void* state)
+void prngSTBStepR(void* buf, size_t count, void* state)
 {
-	register uint16 u;
+	register u16 u;
 	prng_stb_st* s = (prng_stb_st*)state;
 	// pre
 	ASSERT(memIsValid(s, sizeof(prng_stb_st)));

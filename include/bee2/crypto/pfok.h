@@ -3,9 +3,9 @@
 \file pfok.h
 \brief Draft of RD_RB: key establishment protocols based on finite fields
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.06.30
-\version 2014.07.11
+\version 2017.10.10
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -67,7 +67,7 @@ extern "C" {
 	умножения Монтгомери: 
 	\code
 		a \circ b = a b R^{-1} \bmod p, R = 2^{l + 2};
-	\endcode;
+	\endcode
 	Возведение в степень в B_p обозначается круглыми скобками: a^(b) --- 
 	произведение Монтгомери b экземпляров элемента a;
 -	0 < g < p;
@@ -103,9 +103,9 @@ extern "C" {
 /*!	\brief Долговременные параметры */
 typedef struct
 {
-	uint32 l;		/*!< битовая длина p */
-	uint32 r;		/*!< битовая длина личного ключа */
-	uint32 n;		/*!< битовая длина общего ключа */
+	u32 l;			/*!< битовая длина p */
+	u32 r;			/*!< битовая длина личного ключа */
+	u32 n;			/*!< битовая длина общего ключа */
 	octet p[368];	/*!< модуль p */
 	octet g[368];	/*!< образующий g */
 } pfok_params;
@@ -113,8 +113,8 @@ typedef struct
 /*!	\brief Затравочные данные */
 typedef struct
 {
-	uint16 z[31];	/*!< числа z[i] */
-	uint32 lt[20];	/*!< цепочка lt[i] */
+	u16 z[31];		/*!< числа z[i] */
+	u32 lt[20];		/*!< цепочка lt[i] */
 } pfok_seed;
 
 /*!	\brief Обработка нового числа q
@@ -183,7 +183,7 @@ err_t pfokGenParams(
 	-	g является образующим группы B_p.
 	.
 	\return ERR_OK, если параметры корректны, и код ошибки в противном случае.
-	\warning Не проверяется, что p построен по 
+	\warning Не проверяется, что p построен по алгоритму 5.2.
 */
 err_t pfokValParams(
 	const pfok_params* params	/*!< [in] долговременные параметры */

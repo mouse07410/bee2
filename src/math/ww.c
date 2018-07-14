@@ -3,9 +3,9 @@
 \file ww.c
 \brief Arbitrary length words
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.18
-\version 2015.04.06
+\version 2016.05.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -13,7 +13,7 @@ version 3. See Copyright Notices in bee2/info.h.
 
 #include "bee2/core/mem.h"
 #include "bee2/core/util.h"
-#include "bee2/math/word.h"
+#include "bee2/core/word.h"
 #include "bee2/math/ww.h"
 
 /*
@@ -86,14 +86,14 @@ int SAFE(wwCmp2)(const word a[], size_t n, const word b[], size_t m)
 	{
 		register int z = wwIsZero(a + m, n - m);
 		ret = wwCmp(a, b, m);
-		ret = (-z) & ret | (z - 1) & 1;
+		ret = -z & ret | (z - 1) & 1;
 		z = 0;
 	}
 	else if (n < m)
 	{
 		register int z = wwIsZero(b + n, m - n);
 		ret = wwCmp(a, b, n);
-		ret = (-z) & ret | (z - 1) & -1;
+		ret = -z & ret | (z - 1) & -1;
 		z = 0;
 	}
 	else
@@ -120,8 +120,8 @@ int SAFE(wwCmpW)(const word a[], size_t n, register word w)
 	else
 	{
 		register int z = wwIsZero(a + 1, n - 1);
-		ret = (-wordLess(a[0], w)) & -1 | (-wordGreater(a[0], w)) & 1;
-		ret = (-z) & ret | (z - 1) & 1;
+		ret = -wordLess(a[0], w) & -1 | -wordGreater(a[0], w) & 1;
+		ret = -z & ret | (z - 1) & 1;
 		z = 0;
 	}
 	w = 0;
@@ -295,28 +295,6 @@ size_t wwOctetSize(const word a[], size_t n)
 			--pos, mask >>= 8;
 		return n * O_PER_W + pos + 1;
 	}
-}
-
-void wwToMem(void* dest, const word* src, size_t n)
-{
-	ASSERT(wwIsValid(src, n));
-	ASSERT(memIsValid(dest, O_OF_W(n)));
-	memMove(dest, src, O_OF_W(n));
-#if (OCTET_ORDER == BIG_ENDIAN)
-	while (n--)
-		((word*)dest)[n] = wordRev(((word*)dest)[n]);
-#endif // OCTET_ORDER
-}
-
-void wwFromMem(word* dest, size_t n, const void* src)
-{
-	ASSERT(memIsValid(src, O_OF_W(n)));
-	ASSERT(wwIsValid(dest, n));
-	memMove(dest, src, O_OF_W(n));
-#if (OCTET_ORDER == BIG_ENDIAN)
-	while (n--)
-		dest[n] = wordRev(dest[n]);
-#endif // OCTET_ORDER
 }
 
 /*
@@ -502,6 +480,8 @@ size_t wwNAF(word naf[], const word a[], size_t n, size_t w)
 \todo Функции wwShLoCarry(), wwShHiCarry() перегружены. Оценить их
 востребованность. Для размышления. В архитектуре i386 при сдвиге регистра
 более чем на 1 позицию флаг переноса формально не определен.
+
+\todo Проверить wwTrimLo().
 *******************************************************************************
 */
 
@@ -669,9 +649,11 @@ void wwTrimLo(word a[], size_t n, size_t pos)
 	size_t i = pos / B_PER_W;
 	ASSERT(wwIsValid(a, n));
 	if (i < n)
+	{
 		// очистить биты слова a[i]
-		if (pos %= B_PER_W != 0)
+		if (pos %= B_PER_W)
 			a[i] >>= pos, a[i] <<= pos;
+	}
 	else if (i > n)
 		i = n;
 	// очистить остальные слова

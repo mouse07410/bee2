@@ -3,9 +3,9 @@
 \file dstu.h
 \brief DSTU 4145-2002 (Ukraine): digital signature algorithms
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2014.04.27
+\version 2017.01.11
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -65,7 +65,7 @@ p[0] >= p[1] >= p[2] >= p[3].
 где кофактор c >= 2. Таким образом, порядок dstu_params::n укладывается 
 в O_OF_B(m) октетов и даже, может быть, в меньшее число октетов.
 
-\remark Кофактор c >= 2, поскольку точка (0, \sqrt{dstu_params::B}) лежит 
+\remark Кофактор c >= 2, поскольку точка (0, \sqrt(dstu_params::B)) лежит 
 на кривой и имеет порядок 2. 
 
 \remark Для стандартных кривых, заданных в приложении Г, 
@@ -94,11 +94,11 @@ p[0] >= p[1] >= p[2] >= p[3].
 /*! \brief Долговременные параметры dstu */
 typedef struct
 {
-	uint16 p[4];				/*!< описание базового поля */
+	u16 p[4];					/*!< описание базового поля */
 	octet A;					/*!< коэффициент A (0 или 1) */
 	octet B[DSTU_SIZE];			/*!< коэффициент B */
 	octet n[DSTU_SIZE];			/*!< порядок группы точек */
-	uint32 c;					/*!< кофактор */
+	u32 c;						/*!< кофактор */
 	octet P[2 * DSTU_SIZE];		/*!< базовая точка */
 } dstu_params;
 

@@ -3,9 +3,9 @@
 \file bign.h
 \brief STB 34.101.45 (bign): digital signature and key transport algorithms
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2014.04.28
+\version 2018.07.04
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -65,7 +65,7 @@ extern "C" {
 /*!	\brief Долговременные параметры bign */
 typedef struct
 {
-	uint32 l;		/*!< уровень стойкости (128, 192 или 256) */
+	u32 l;			/*!< уровень стойкости (128, 192 или 256) */
 	octet p[64];	/*!< модуль p */
 	octet a[64];	/*!< коэффициент a */
 	octet b[64];	/*!< коэффициент b */
@@ -270,7 +270,7 @@ err_t bignSign2(
 	const octet hash[],			/*!< [in] хэш-значение */
 	const octet privkey[],		/*!< [in] личный ключ */
 	const void* t,				/*!< [in] дополнительные данные */
-	size_t t_len				/*!< [in] состояние генератора */
+	size_t t_len				/*!< [in] размер дополнительных данных */
 );
 
 /*!	\brief Проверка ЭЦП

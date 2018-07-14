@@ -3,9 +3,9 @@
 \file tm.h
 \brief Time and timers
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2014.11.18
+\version 2015.11.25
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -51,10 +51,10 @@ extern "C" {
 *******************************************************************************
 */
 
-#if (B_PER_W == 16)
-	typedef uint32 tm_ticks_t;
+#ifndef U64_SUPPORT
+	typedef u32 tm_ticks_t;
 #else 
-	typedef uint64 tm_ticks_t;
+	typedef u64 tm_ticks_t;
 #endif
 
 /*!	\brief Показания таймера
@@ -83,7 +83,10 @@ tm_ticks_t tmFreq();
 	с переполнением.
 	\return Число экспериментов в секунду или SIZE_MAX в случае ошибки.
 */
-size_t tmSpeed(size_t reps, tm_ticks_t ticks);
+size_t tmSpeed(
+	size_t reps,			/*!< [in] число экспериментов */
+	tm_ticks_t ticks		/*!< [in] число тактов */
+);
 
 /*!
 *******************************************************************************
@@ -92,12 +95,14 @@ size_t tmSpeed(size_t reps, tm_ticks_t ticks);
 \section tm-time Время
 
 Системное время задается числом секунд, прошедших с полуночи 
-01 января 1970 года.
-
-\remark Использованную шкалу времени прнято называть UNIX-время. 
+01 января 1970 года (1970-01-01T00:00:00Z в формате ISO 8601).
+Использованную шкалу времени прнято называть UNIX-время. 
 Начало отсчета -- старт "эры UNIX" (Unix Epoch).
 
-\remark 10 января 2004 счетчик секунд принял значение 2^30.
+Отметка времени представляется типом tm_time_t. Этот тип повторяет системный 
+тип time_t и наследует его неопределенность по разрядности и знаковости.
+
+\warning 10 января 2004 счетчик секунд принял значение 2^30.
 32-битовый счетчик исчерпает себя 19 января 2038 года.
 *******************************************************************************
 */
@@ -105,8 +110,30 @@ size_t tmSpeed(size_t reps, tm_ticks_t ticks);
 /*!	\brief Время */
 typedef time_t tm_time_t;
 
-/*!	\brief Текущее время */
-#define tmTime() time(0)
+#define TIME_0 ((tm_time_t)0)
+#define TIME_1 ((tm_time_t)1)
+#define TIME_ERR ((tm_time_t)(TIME_0 - TIME_1))
+
+/*!	\brief UNIX-время
+
+	Возвращается число секунд, прошедших с момента 1970-01-01T00:00:00Z.
+	\return Число секунд или TIME_ERR в случае ошибки.
+*/
+tm_time_t tmTime();
+
+/*!	\brief Округленное UNIX-время
+
+	Возвращается округленное UNIX-время (tmTime() - t0) / ts,
+	где t0 --- базовая отметка времени (начало отсчета), ts -- шаг времени.
+	\return Округленное UNIX-время или TIME_ERR в случае ошибки.
+	\remark Ошибками считаются следующие ситуации: 
+		ts == 0, tmTime() < t0.
+	\remark Процедура округления соответствует RFC 6238.
+*/
+tm_time_t tmTimeRound(
+	tm_time_t t0,		/*!< [in] начало отсчета */
+	tm_time_t ts		/*!< [in] шаг времени */
+);
 
 #ifdef __cplusplus
 } /* extern "C" */

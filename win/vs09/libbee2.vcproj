@@ -245,7 +245,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="../../include;../../src"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;SAFE_FAST"
+				PreprocessorDefinitions="WIN32;NDEBUG"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -304,7 +304,15 @@
 				Name="core"
 				>
 				<File
+					RelativePath="..\..\include\bee2\core\b64.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\include\bee2\core\blob.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\bee2\core\dec.h"
 					>
 				</File>
 				<File
@@ -313,6 +321,10 @@
 				</File>
 				<File
 					RelativePath="..\..\include\bee2\core\err.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\bee2\core\hex.h"
 					>
 				</File>
 				<File
@@ -356,7 +368,23 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\include\bee2\core\u16.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\bee2\core\u32.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\bee2\core\u64.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\include\bee2\core\util.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\bee2\core\word.h"
 					>
 				</File>
 			</Filter>
@@ -381,6 +409,10 @@
 				</File>
 				<File
 					RelativePath="..\..\include\bee2\crypto\bign.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\bee2\crypto\botp.h"
 					>
 				</File>
 				<File
@@ -436,10 +468,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\include\bee2\math\word.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\include\bee2\math\ww.h"
 					>
 				</File>
@@ -462,7 +490,15 @@
 				Name="core"
 				>
 				<File
+					RelativePath="..\..\src\core\b64.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\src\core\blob.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\core\dec.c"
 					>
 				</File>
 				<File
@@ -471,6 +507,10 @@
 				</File>
 				<File
 					RelativePath="..\..\src\core\err.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\core\hex.c"
 					>
 				</File>
 				<File
@@ -506,7 +546,23 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\src\core\u16.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\core\u32.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\core\u64.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\src\core\util.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\core\word.c"
 					>
 				</File>
 			</Filter>
@@ -546,10 +602,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\src\math\word.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\src\math\ww.c"
 					>
 				</File>
@@ -557,10 +609,42 @@
 					RelativePath="..\..\src\math\zm.c"
 					>
 				</File>
-				<File
-					RelativePath="..\..\src\math\zz.c"
+				<Filter
+					Name="zz"
 					>
-				</File>
+					<File
+						RelativePath="..\..\src\math\zz\zz_add.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\zz\zz_etc.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\zz\zz_gcd.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\zz\zz_int.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\zz\zz_mod.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\zz\zz_mul.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\zz\zz_pow.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\math\zz\zz_red.c"
+						>
+					</File>
+				</Filter>
 			</Filter>
 			<Filter
 				Name="crypto"
@@ -578,15 +662,15 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\src\crypto\belt.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\src\crypto\bign.c"
 					>
 				</File>
 				<File
 					RelativePath="..\..\src\crypto\bign_lcl.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\src\crypto\botp.c"
 					>
 				</File>
 				<File
@@ -605,6 +689,78 @@
 					RelativePath="..\..\src\crypto\pfok.c"
 					>
 				</File>
+				<Filter
+					Name="belt"
+					>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_bde.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_block.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_cbc.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_cfb.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_ctr.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_dwp.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_ecb.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_fmt.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_hash.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_hmac.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_int.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_int.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_krp.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_kwp.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_mac.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_pbkdf.c"
+						>
+					</File>
+					<File
+						RelativePath="..\..\src\crypto\belt\belt_wbl.c"
+						>
+					</File>
+				</Filter>
 			</Filter>
 		</Filter>
 	</Files>

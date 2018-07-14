@@ -3,61 +3,108 @@
 \file mem.c
 \brief Memory management
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.12.18
-\version 2015.06.08
+\version 2017.01.13
 \license This program is released under the GNU General Public License
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
 #include "bee2/core/mem.h"
-#include "bee2/core/util.h"
 #include "bee2/core/str.h"
-#include "bee2/math/word.h"
+#include "bee2/core/util.h"
+#include "bee2/core/word.h"
+
+#ifndef OS_APPLE
+	#include <malloc.h>
+#else
+	#include <stdlib.h>
+#endif
+#ifdef OS_WIN
+	#include <windows.h>
+#endif
 
 /*
 *******************************************************************************
-Шестнадцатеричные символы
+Проверка
+
+\todo Реализовать полноценную проверку корректности памяти.
 *******************************************************************************
 */
 
-static octet _oFromHex(const char* hex)
+bool_t memIsValid(const void* buf, size_t count)
 {
-	register octet o;
-	ASSERT(memIsValid(hex, 2));
-	// определить старшую тетраду
-	if ('0' <= *hex && *hex <= '9')
-		o = *hex - '0';
-	else if ('A' <= *hex && *hex <= 'F')
-		o = *hex - 'A' + 10;
-	else if ('a' <= *hex && *hex <= 'f')
-		o = *hex - 'a' + 10;
-	else
-		ASSERT(0);
-	// к младшей тетраде
-	o <<= 4, ++hex;
-	// определить младшую тетраду
-	if ('0' <= *hex && *hex <= '9')
-		o |= *hex - '0';
-	else if ('A' <= *hex && *hex <= 'F')
-		o |= *hex - 'A' + 10;
-	else if ('a' <= *hex && *hex <= 'f')
-		o |= *hex - 'a' + 10;
-	else
-		ASSERT(0);
-	// результат
-	return o;
+	return count == 0 || buf != 0;
 }
 
-static const char _hex_symbols[] = "0123456789ABCDEF";
+/*
+*******************************************************************************
+Стандартные функции
 
-static void _oToHex(char* hex, register octet o)
+\remark Перед вызовом memcpy(), memmove(), memset() проверяется, 
+что count != 0: при count == 0 поведение стандартных функций непредсказуемо
+(см. https://www.imperialviolet.org/2016/06/26/nonnull.html).
+
+\remark Прямое обращение к функции ядра HeapAlloc() решает проблему 
+с освобождением памяти в плагине bee2evp, связывающем bee2 с OpenSSL (1.1.0).
+*******************************************************************************
+*/
+
+void memCopy(void* dest, const void* src, size_t count)
 {
-	ASSERT(memIsValid(hex, 2));
-	hex[0] = _hex_symbols[o >> 4];
-	hex[1] = _hex_symbols[o & 15];
-	o = 0;
+	ASSERT(memIsDisjoint(src, dest, count));
+	if (count)
+		memcpy(dest, src, count);
+}
+
+void memMove(void* dest, const void* src, size_t count)
+{
+	ASSERT(memIsValid(src, count));
+	ASSERT(memIsValid(dest, count));
+	if (count)
+		memmove(dest, src, count);
+}
+
+void memSet(void* buf, octet c, size_t count)
+{
+	ASSERT(memIsValid(buf, count));
+	if (count)
+		memset(buf, c, count);
+}
+
+void* memAlloc(size_t count)
+{
+#ifdef OS_WIN
+	return HeapAlloc(GetProcessHeap(), 0, count);
+#else
+	return malloc(count);
+#endif
+}
+
+void* memRealloc(void* buf, size_t count)
+{
+	if (count == 0)
+	{
+		memFree(buf);
+		return 0;
+	}
+#ifdef OS_WIN
+	if (!buf)
+		return HeapAlloc(GetProcessHeap(), 0, count);
+	return HeapReAlloc(GetProcessHeap(), 0, buf, count);
+#else
+	return realloc(buf, count);
+#endif
+}
+
+void memFree(void* buf)
+{
+#ifdef OS_WIN
+	HeapFree(GetProcessHeap(), 0, buf);
+#else
+	free(buf);
+#endif
 }
 
 /*
@@ -87,15 +134,8 @@ static void _oToHex(char* hex, register octet o)
 \remark На платформе Windows есть функции SecureZeroMemory()
 и RtlSecureZeroMemory(), которые, как и memWipe(), выполняют
 гарантированную очистку памяти.
-
-\todo Реализовать полноценную проверку корректности памяти.
 *******************************************************************************
 */
-
-bool_t memIsValid(const void* buf, size_t count)
-{
-	return count == 0 || buf != 0;
-}
 
 bool_t SAFE(memEq)(const void* buf1, const void* buf2, size_t count)
 {
@@ -406,52 +446,6 @@ void memSwap(void* buf1, void* buf2, size_t count)
 	}
 }
 
-bool_t SAFE(memEqHex)(const void* buf, const char* hex)
-{
-	register word diff = 0;
-	size_t count = strLen(hex);
-	ASSERT(count % 2 == 0);
-	ASSERT(memIsValid(buf, count / 2));
-	for (; count; count -= 2, hex += 2, buf = (const octet*)buf + 1)
-		diff |= *(const octet*)buf ^ _oFromHex(hex);
-	return wordEq(diff, 0);
-}
-
-bool_t FAST(memEqHex)(const void* buf, const char* hex)
-{
-	size_t count = strLen(hex);
-	ASSERT(count % 2 == 0);
-	ASSERT(memIsValid(buf, count / 2));
-	for (; count; count -= 2, hex += 2, buf = (const octet*)buf + 1)
-		if (*(const octet*)buf != _oFromHex(hex))
-			return FALSE;
-	return TRUE;
-}
-
-bool_t SAFE(memEqHexRev)(const void* buf, const char* hex)
-{
-	register word diff = 0;
-	size_t count = strLen(hex);
-	ASSERT(count % 2 == 0);
-	ASSERT(memIsValid(buf, count / 2));
-	hex = hex + count;
-	for (; count; count -= 2, buf = (const octet*)buf + 1)
-		diff |= *(const octet*)buf ^ _oFromHex(hex -= 2);
-	return wordEq(diff, 0);
-}
-
-bool_t FAST(memEqHexRev)(const void* buf, const char* hex)
-{
-	size_t count = strLen(hex);
-	ASSERT(count % 2 == 0);
-	ASSERT(memIsValid(buf, count / 2));
-	hex = hex + count;
-	for (; count; count -= 2, buf = (const octet*)buf + 1)
-		if (*(const octet*)buf != _oFromHex(hex -= 2))
-			return FALSE;
-	return TRUE;
-}
-
 /*
 *******************************************************************************
 Реверс октетов
@@ -468,138 +462,4 @@ void memRev(void* buf, size_t count)
 		((octet*)buf)[count - 1 - i] ^= ((octet*)buf)[i];
 		((octet*)buf)[i] ^= ((octet*)buf)[count - 1 - i];
 	}
-}
-
-/*
-*******************************************************************************
-Преобразования
-*******************************************************************************
-*/
-
-void memToU16(uint16 dest[], const void* src, size_t count)
-{
-	ASSERT(memIsValid(src, count));
-	ASSERT(memIsValid(dest, ((count + 1) / 2) * 2));
-	memMove(dest, src, count);
-	if (count % 2)
-		((octet*)dest)[count] = 0;
-#if (OCTET_ORDER == BIG_ENDIAN)
-	for (count = (count + 1) / 2; count--;)
-		dest[count] = wordRevU16(dest[count]);
-#endif // OCTET_ORDER
-}
-
-void memFromU16(void* dest, size_t count, const uint16 src[])
-{
-	ASSERT(memIsValid(src, (count + 1) / 2 * 2));
-	ASSERT(memIsValid(dest, count));
-	memMove(dest, src, count);
-#if (OCTET_ORDER == BIG_ENDIAN)
-	if (count % 2)
-	{
-		register uint16 u = src[--count / 2];
-		((octet*)dest)[count] = (octet)u;
-		u = 0;
-	}
-	for (count /= 2; count--;)
-		((uint16*)dest)[count] = wordRevU16(((uint16*)dest)[count]);
-#endif // OCTET_ORDER
-}
-
-void memToU32(uint32 dest[], const void* src, size_t count)
-{
-	ASSERT(memIsValid(src, count));
-	ASSERT(memIsValid(dest, ((count + 3) / 4) * 4));
-	memMove(dest, src, count);
-	if (count % 4)
-		memSetZero((octet*)dest + count, 4 - count % 4);
-#if (OCTET_ORDER == BIG_ENDIAN)
-	for (count = (count + 3) / 4; count--;)
-		dest[count] = wordRevU32(dest[count]);
-#endif // OCTET_ORDER
-}
-
-void memFromU32(void* dest, size_t count, const uint32 src[])
-{
-	ASSERT(memIsValid(src, (count + 3) / 4 * 4));
-	ASSERT(memIsValid(dest, count));
-	memMove(dest, src, count);
-#if (OCTET_ORDER == BIG_ENDIAN)
-	if (count % 4)
-	{
-		size_t t = count / 4;
-		register uint32 u = src[t];
-		for (t *= 4; t < count; ++t, u >>= 8)
-			((octet*)dest)[t] = (octet)u;
-	}
-	for (count /= 4; count--;)
-		((uint32*)dest)[count] = wordRevU32(((uint32*)dest)[count]);
-#endif // OCTET_ORDER
-}
-
-void memToWord(word dest[], const void* src, size_t count)
-{
-	ASSERT(memIsValid(src, count));
-	ASSERT(memIsValid(dest, W_OF_O(count) * O_PER_W));
-	memMove(dest, src, count);
-	if (count % O_PER_W)
-		memSetZero((octet*)dest + count, O_PER_W - count % O_PER_W);
-#if (OCTET_ORDER == BIG_ENDIAN)
-	for (count = W_OF_O(count); count--;)
-		dest[count] = wordRev(dest[count]);
-#endif // OCTET_ORDER
-}
-
-void memFromWord(void* dest, size_t count, const word src[])
-{
-	ASSERT(memIsValid(src, W_OF_O(count)));
-	ASSERT(memIsValid(dest, count));
-	memMove(dest, src, count);
-#if (OCTET_ORDER == BIG_ENDIAN)
-	if (count % O_PER_W)
-	{
-		size_t t = count / O_PER_W;
-		register uint32 w = src[t];
-		for (t *= O_PER_W; t < count; ++t, w >>= 8)
-			((octet*)dest)[t] = (octet)w;
-	}
-	for (count /= O_PER_W; count--;)
-		((word*)dest)[count] = wordRev(((word*)dest)[count]);
-#endif // OCTET_ORDER
-}
-
-void memToHex(char* dest, const void* src, size_t count)
-{
-	ASSERT(memIsDisjoint2(src, count, dest, 2 * count + 1));
-	for (; count--; dest += 2, src = (const octet*)src + 1)
-		_oToHex(dest, *(const octet*)src);
-	*dest = '\0';
-}
-
-void memToHexRev(char* dest, const void* src, size_t count)
-{
-	ASSERT(memIsDisjoint2(src, count, dest, 2 * count + 1));
-	dest = dest + 2 * count;
-	*dest = '\0';
-	for (; count--; src = (const octet*)src + 1)
-		_oToHex(dest -= 2, *(const octet*)src);
-}
-
-void memFromHex(void* dest, const char* src)
-{
-	size_t count = strLen(src);
-	ASSERT(count % 2 == 0);
-	ASSERT(memIsDisjoint2(src, count + 1, dest, count / 2));
-	for (; count; count -= 2, src += 2, dest = (octet*)dest + 1)
-		*(octet*)dest = _oFromHex(src);
-}
-
-void memFromHexRev(void* dest, const char* src)
-{
-	size_t count = strLen(src);
-	ASSERT(count % 2 == 0);
-	ASSERT(memIsDisjoint2(src, count + 1, dest, count / 2));
-	src = src + count;
-	for (; count; count -= 2, dest = (octet*)dest + 1)
-		*(octet*)dest = _oFromHex(src -= 2);
 }

@@ -3,9 +3,9 @@
 \file bels.c
 \brief STB 34.101.60 (bels): secret sharing algorithms
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.05.14
-\version 2015.06.08
+\version 2016.05.25
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -14,6 +14,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/blob.h"
 #include "bee2/core/err.h"
 #include "bee2/core/mem.h"
+#include "bee2/core/u32.h"
 #include "bee2/core/util.h"
 #include "bee2/crypto/bels.h"
 #include "bee2/crypto/belt.h"
@@ -27,7 +28,7 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-static const uint32 m_16[17] = 
+static const u32 m_16[17] = 
 {
 	0x00000087, 
 	0x00000285, 0x00000C41, 0x00001821, 0x00008015, 
@@ -36,7 +37,7 @@ static const uint32 m_16[17] =
 	0x00108041, 0x00200025, 0x00200405, 0x00200C01,
 };
 
-static const uint32 m_24[17] = 
+static const u32 m_24[17] = 
 {
 	0x00000087, 
 	0x00001209, 0x00001241, 0x00008601, 0x00008821, 
@@ -45,7 +46,7 @@ static const uint32 m_24[17] =
 	0x00228001, 0x00400209, 0x00420801, 0x00810401,
 };
 
-static const uint32 m_32[17] = 
+static const u32 m_32[17] = 
 {
 	0x00000425, 
 	0x0001000B, 0x0001000D, 0x0001A001, 0x00020061, 
@@ -62,11 +63,11 @@ err_t belsStdM(octet m[], size_t len, size_t num)
 		return ERR_BAD_INPUT;
 	// загрузить
 	if (len == 16)
-		memFromU32(m, 4, m_16 + num);
+		u32To(m, 4, m_16 + num);
 	else if (len == 24)
-		memFromU32(m, 4, m_24 + num);
+		u32To(m, 4, m_24 + num);
 	else
-		memFromU32(m, 4, m_32 + num);
+		u32To(m, 4, m_32 + num);
 	memSetZero(m + 4, len - 4);
 	return ERR_OK;
 }
@@ -85,12 +86,12 @@ err_t belsValM(const octet m0[], size_t len)
 	n = W_OF_O(len);
 	state = blobCreate(n + 1 + ppIsIrred_deep(n + 1));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	f0 = (word*)state;
 	stack = f0 + n + 1;
 	// загрузить многочлен
-	memToWord(f0, m0, len);
+	wwFrom(f0, m0, len);
 	f0[n] = 1;
 	// неприводим?
 	code = ppIsIrred(f0, n + 1, stack) ? ERR_OK : ERR_BAD_PUBKEY;
@@ -125,19 +126,19 @@ err_t belsGenM0(octet m0[], size_t len, gen_i ang, void* ang_state)
 	n = W_OF_O(len);
 	state = blobCreate(n + 1 + ppIsIrred_deep(n + 1));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	f0 = (word*)state;
 	stack = f0 + n + 1;
 	// сгенерировать многочлен
 	f0[n] = 1;
-	for (reps = len * 8 * 8; reps--;)
+	for (reps = len * 8 * B_PER_IMPOSSIBLE * 3 / 4; reps--;)
 	{
 		ang(f0, len, ang_state);
-		memToWord(f0, f0, len);
+		wwFrom(f0, f0, len);
 		if (ppIsIrred(f0, n + 1, stack))
 		{
-			wwToMem(m0, f0, n);
+			wwTo(m0, len, f0);
 			break;
 		}
 	}
@@ -168,26 +169,26 @@ err_t belsGenMi(octet mi[], size_t len, const octet m0[], gen_i ang,
 	n = W_OF_O(len);
 	state = blobCreate(O_OF_W(2 * n + 2) + ppMinPolyMod_deep(n + 1));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	f0 = (word*)state;
 	f = f0 + n + 1;
 	u = f;
 	stack = f + n + 1;
 	// загрузить многочлен
-	memToWord(f0, m0, len);
+	wwFrom(f0, m0, len);
 	f0[n] = 1;
 	// попытки генерации
 	for (reps = 3; reps--; )
 	{
 		ang(u, len, ang_state);
-		memToWord(u, u, len), u[n] = 0;
+		wwFrom(u, u, len), u[n] = 0;
 		// f <- минимальный многочлен элемента u
 		ppMinPolyMod(f, u, f0, n + 1, stack);
 		// f подходит?
 		if (f[n] == 1 && wwCmp(f, f0, n) != 0)
 		{
-			wwToMem(mi, f, n);
+			wwTo(mi, len, f);
 			break;
 		}
 	}
@@ -224,30 +225,30 @@ err_t belsGenMid(octet mid[], size_t len, const octet m0[], const octet id[],
 			beltHash_keep(),
 			ppMinPolyMod_deep(n + 1)));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	f0 = (word*)state;
 	f = f0 + n + 1;
 	u = f + n + 1;
 	stack = u + W_OF_O(32) + 1;
 	// загрузить многочлен
-	memToWord(f0, m0, len);
+	wwFrom(f0, m0, len);
 	f0[n] = 1;
 	// хэшировать
 	beltHashStart(stack);
 	beltHashStepH(id, id_len, stack);
 	beltHashStepG((octet*)u, stack);
-	memToWord(u, u, 32);
+	wwFrom(u, u, 32);
 	u[n] = 0;
 	// попытки генерации
-	for (reps = 3; reps--; )
+	for (reps = MAX2(3, B_PER_IMPOSSIBLE * 2 / len / 8); reps--;)
 	{
 		// f <- минимальный многочлен элемента u
 		ppMinPolyMod(f, u, f0, n + 1, stack);
 		// f подходит?
 		if (f[n] == 1 && !wwEq(f, f0, n))
 		{
-			wwToMem(mid, f, n);
+			wwTo(mid, len, f);
 			break;
 		}
 		// u <- u + 1
@@ -291,7 +292,7 @@ err_t belsShare(octet si[], size_t count, size_t threshold, size_t len,
 			ppMul_deep(threshold * n - n, n),
 			ppMod_deep(threshold * n, n + 1)));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	f = (word*)state;
 	k = f + n + 1;
@@ -299,23 +300,23 @@ err_t belsShare(octet si[], size_t count, size_t threshold, size_t len,
 	stack = c + threshold * n;
 	// сгенерировать k
 	rng(k, threshold * len - len, rng_state);
-	memToWord(k, k, threshold * len - len);
+	wwFrom(k, k, threshold * len - len);
 	// c(x) <- (x^l + m0(x))k(x) + s(x)
-	memToWord(f, m0, len);
+	wwFrom(f, m0, len);
 	ppMul(c, k, threshold * n - n, f, n, stack);
 	wwXor2(c + n, k, threshold * n - n);
-	memToWord(f, s, len);
+	wwFrom(f, s, len);
 	wwXor2(c, f, n);
 	// цикл по пользователям
 	for (i = 0; i < count; ++i)
 	{
 		// f(x) <- x^l + mi(x)
 		EXPECT(belsValM(mi + i * len, len) == ERR_OK);
-		memToWord(f, mi + i * len, len);
+		wwFrom(f, mi + i * len, len);
 		f[n] = 1;
 		// si(x) <- c(x) mod f(x)
 		ppMod(f, c, threshold * n, f, n + 1, stack);
-		wwToMem(si + i * len, f, n);
+		wwTo(si + i * len, len, f);
 	}
 	// завершение
 	blobClose(state);
@@ -325,6 +326,9 @@ err_t belsShare(octet si[], size_t count, size_t threshold, size_t len,
 /*
 *******************************************************************************
 Восстановление секрета
+
+\todo Организовать вычисления так, чтобы не было медленных (без Карацубы)
+умножений "маленького" многочлена на "большой".
 *******************************************************************************
 */
 
@@ -353,11 +357,10 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 		ppMul_deep(n, n), 
 		ppMod_deep(count * n, n + 1));
 	for (i = 1; i < count; ++i)
-		deep = utilMax(7, 
+		deep = utilMax(6, 
 			deep, 
 			ppExGCD_deep(n + 1, i * n + 1),
 			ppMul_deep(i * n, i * n),
-			ppMul_deep(2 * i * n, n),
 			ppMul_deep(2 * i * n, n),
 			ppMul_deep(2 * n, i * n),
 			ppMod_deep((2 * i + 1) * n, (i + 1) * n + 1));
@@ -367,12 +370,12 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 		(count - 1) * n + 1 +
 		(count - 1) * n + 1 +
 		n + 1 +
-		(2 * count - 1) * n + 1 + 
-		(2 * count - 2) * n);
+		(2 * count - 1) * n + 
+		MAX2((2 * count - 2) * n, (count + 1) * n));
 	// создать состояние
 	state = blobCreate(deep);
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// раскладка состояния
 	f = (word*)state;
 	g = f + n + 1;
@@ -380,18 +383,18 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 	u = d + (count - 1) * n + 1;
 	v = u + (count - 1) * n + 1;
 	c = v + n + 1;
-	t = c + (2 * count - 1) * n + 1;
-	stack = t + (2 * count - 2) * n;
-	// c(x) <- s1(x)
-	memToWord(c, si, len);
-	// g(x) <- x^l + m1(x)
-	memToWord(g, mi, len), g[n] = 1;
+	t = c + (2 * count - 1) * n;
+	stack = t + MAX2((2 * count - 2) * n, (count + 1) * n);
+	// [n]c(x) <- s1(x)
+	wwFrom(c, si, len);
+	// [n + 1]g(x) <- x^l + m1(x)
+	wwFrom(g, mi, len), g[n] = 1;
 	// цикл по пользователям
 	for (f[n] = 1, i = 1; i < count; ++i)
 	{
-		// f(x) <- x^l + mi(x)
-		memToWord(f, mi + i * len, len);
-		// найти d(x) = \gcd(f(x), g(x)) и коэффициенты Безу u(x), v(x)
+		// [n + 1]f(x) <- x^l + mi(x)
+		wwFrom(f, mi + i * len, len);
+		// найти d(x) = \gcd(f(x), g(x)) и коэфф. Безу [i * n]u(x), [n]v(x)
 		ppExGCD(d, u, v, f, n + 1, g, i * n + 1, stack);
 		ASSERT(u[i * n] == 0 && v[n] == 0);
 		// d(x) != 1? 
@@ -400,31 +403,34 @@ err_t belsRecover(octet s[], size_t count, size_t len, const octet si[],
 			blobClose(state);
 			return ERR_BAD_PUBKEY;
 		}
-		// c(x) <- u(x)f(x)c(x)
+		// [2 * i * n]c(x) <- u(x)f(x)c(x)
+		// (с помощью [2 * i * n]t)
 		ppMul(t, u, i * n, c, i * n, stack);
 		ppMul(c, t, 2 * i * n, f, n, stack);
 		wwXor2(c + n, t, 2 * i * n);
 		// c(x) <- c(x) + v(x)g(x)si(x)
-		memToWord(t, si + i * len, len);
+		// (с помощью [2 * n]d и [(i + 2) * n]t)
+		wwFrom(t, si + i * len, len);
 		ppMul(d, v, n, t, n, stack);
 		ppMul(t, d, 2 * n, g, i * n, stack);
 		wwXor2(t + i * n, d, 2 * n);
 		wwXor2(c, t, (i + 2) * n);
-		// g(x) <- g(x)f(x)
+		// [(i + 1) * n + 1]g(x) <- g(x)f(x)
+		// (с помощью [(i + 1) * n]t)
 		ppMul(t, f, n, g, i * n, stack);
 		wwXor2(t + n, g, i * n);
 		wwXor2(t + i * n, f, n);
 		wwCopy(g, t, (i + 1) * n);
 		g[(i + 1) * n] = 1;
-		// c(x) <- c(x) mod g(x)
+		// [(i + 1) * n]c(x) <- c(x) mod g(x)
 		ppMod(c, c, (2 * i + 1) * n, g, (i + 1) * n + 1, stack);
 		ASSERT(c[(i + 1) * n] == 0);
 	}
-	// s(x) <- c(x) mod (x^l + m0(x))
-	memToWord(f, m0, len), f[n] = 1;
+	// [n]s(x) <- c(x) mod (x^l + m0(x))
+	wwFrom(f, m0, len), f[n] = 1;
 	ppMod(c, c, count * n, f, n + 1, stack);
 	ASSERT(c[n] == 0);
-	wwToMem(s, c, n);
+	wwTo(s, len, c);
 	// завершение
 	blobClose(state);
 	return ERR_OK;

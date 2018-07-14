@@ -3,9 +3,9 @@
 \file str.h
 \brief Strings
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.02.04
-\version 2015.04.14
+\version 2016.09.19
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -36,37 +36,60 @@ extern "C" {
 представляет собой последовательность символов-октетов, которая
 заканчивается нулевым октетом.
 
-\pre В функции передаются корректные буферы памяти.
+\pre Во все функции, кроме strIsValid(), передаются корректные строки.
 *******************************************************************************
 */
 
-/*
-*******************************************************************************
-Псевдонимы стандартных функций
-*******************************************************************************
-*/
+/*!	\brief Длина строки
 
-/*!	Определяется длина строки (число символов до завершающего нулевого).
+	Определяется длина строки str -- число символов до завершающего нулевого.
+	\return Длина строки
 */
-#define strLen(str) strlen(str)
+size_t strLen(
+  const char* str		/*< [in] строка */
+);
 
-/*!	Возвращается strLen(str), если strLen(str) < count, или count в противном
-	случае.
+/*!	\brief Ограниченная длина строки
+
+	Определяется длина строки str в пределах окна из count первых символов.
+	\return MIN2(strLen(str), count).
 */
-#define strLen2(str, count) strnlen(str, count)
+size_t strLen2(
+  const char* str,		/*< [in] строка */
+  size_t count			/*< [in] длина префикса */
+);
 
-/*!	Строка src копируется в dest.
+/*!	\brief Корректная строка?
+
+	Проверяется, что строка str корректна.
+	\return Признак успеха.
+*/
+bool_t strIsValid(
+	const char* str		/*!< [in] строка */
+);
+
+/*!	\brief Копирование строки
+
+	Строка src копируется в dest.
 	\pre По адресу dest зарезервировано strLen(src) + 1 октетов.
 	\pre Буферы src и dest не пересекаются.
 */
-#define strCopy(dest, src) strcpy(dest, src)
+void strCopy(
+	char* dest,			/*!< [out] строка-назначение */
+	const char* src		/*!< [in] строка-источник */
+);
 
-/*!	Строки str1 и str2 сравниваются лексикографически.
+/*!	\brief Сравнение строк
+	
+	Строки str1 и str2 сравниваются лексикографически.
 	\return 1, если str1 > str2, или -1, если str1 < str2,
 	или 0, если str1 == str2.
 	\safe Функция нерегулярна.
 */
-#define strCmp(str1, str2) strcmp(str1, str2)
+int strCmp(
+	const char* str1,	/*!< [in] первая строка */
+	const char* str2	/*!< [in] вторая строка */
+);
 
 /*!	Проверяется совпадение строк str1 и str2.
 	\return Признак совпадения.
@@ -80,25 +103,45 @@ extern "C" {
 *******************************************************************************
 */
 
-/*!	\brief Корректная строка?
+/*!	\brief Буквенно-цифовая?
 
-	Проверяется, что строка str корректна.
-	\return Проверяемый признак.
+	Проверяется, что строка str состоит только из символов-цифр '0'-'9'
+	и символов букв 'A'-'Z', 'a'-'z'.
+	\return Признак успеха.
+	\safe Функция нерегулярна.
 */
-bool_t strIsValid(
+bool_t strIsAlphanumeric(
 	const char* str		/*!< [in] строка */
 );
 
-/*!	\brief Шестнадцатеричная строка?
+/*!	\brief Начинается?
 
-	Проверяется, что строка str состоит из шестнадцатеричных символов 
-	'0' -- '9', 'A' -- 'F' (в верхнем или нижнем регистрах).
-	\pre Строка корректна.
-	\return Проверяемый признак.
+	Проверяется, что строка str начинается с префикca prefix.
+	\return Признак успеха.
 	\safe Функция нерегулярна.
 */
-bool_t strIsHex(
-	const char* str		/*!< [in] строка */
+bool_t strStartsWith(
+	const char* str,	/*!< [in] строка */
+	const char* prefix	/*!< [in] префикс */
+);
+
+/*!	\brief Заканчивается?
+
+	Проверяется, что строка str заканчивается суффиксом suffix.
+	\return Признак успеха.
+	\safe Функция нерегулярна.
+*/
+bool_t strEndsWith(
+	const char* str,	/*!< [in] строка */
+	const char* suffix	/*!< [in] суффикс */
+);
+
+/*!	\brief Разворот строки
+
+	Символы строки str переписываются в обратном порядке.
+*/
+void strRev(
+	char* str		/*!< [in] строка */
 );
 
 #ifdef __cplusplus

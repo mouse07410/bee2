@@ -350,6 +350,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\test\crypto\bash-bench.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\crypto\bash-test.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\test\crypto\bels-test.c"
 					>
 				</File>
@@ -363,6 +371,10 @@
 				</File>
 				<File
 					RelativePath="..\..\test\crypto\bign-test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\crypto\botp-test.c"
 					>
 				</File>
 				<File
@@ -383,8 +395,44 @@
 				</File>
 			</Filter>
 			<Filter
+				Name="math"
+				>
+				<File
+					RelativePath="..\..\test\math\ecp-bench.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\math\ecp-test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\math\pri-test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\math\word-test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\math\zz-test.c"
+					>
+				</File>
+			</Filter>
+			<Filter
 				Name="core"
 				>
+				<File
+					RelativePath="..\..\test\core\b64-test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\core\dec-test.c"
+					>
+				</File>
+				<File
+					RelativePath="..\..\test\core\hex-test.c"
+					>
+				</File>
 				<File
 					RelativePath="..\..\test\core\mem-test.c"
 					>
@@ -406,27 +454,27 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\test\core\str-test.c"
+					>
+				</File>
+				<File
 					RelativePath="..\..\test\core\tm-test.c"
 					>
 				</File>
-			</Filter>
-			<Filter
-				Name="math"
-				>
 				<File
-					RelativePath="..\..\test\math\ecp-bench.c"
+					RelativePath="..\..\test\core\u16-test.c"
 					>
 				</File>
 				<File
-					RelativePath="..\..\test\math\pri-test.c"
+					RelativePath="..\..\test\core\u32-test.c"
 					>
 				</File>
 				<File
-					RelativePath="..\..\test\math\word-test.c"
+					RelativePath="..\..\test\core\u64-test.c"
 					>
 				</File>
 				<File
-					RelativePath="..\..\test\math\zz-test.c"
+					RelativePath="..\..\test\core\util-test.c"
 					>
 				</File>
 			</Filter>

@@ -3,9 +3,9 @@
 \file bign_lcl.c
 \brief STB 34.101.45 (bign): local definitions
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.03
-\version 2014.04.20
+\version 2016.07.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -14,12 +14,12 @@ version 3. See Copyright Notices in bee2/info.h.
 #ifndef __BEE2_BIGN_LCL_H
 #define __BEE2_BIGN_LCL_H
 
+#include "bee2/crypto/bign.h"
+#include "bee2/math/ec.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "bee2/crypto/bign.h"
-#include "bee2/math/ec.h"
 
 /*
 *******************************************************************************

@@ -3,9 +3,9 @@
 \file zz.h
 \brief Multiple-precision unsigned integers
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.22
-\version 2015.02.03
+\version 2016.07.05
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -63,8 +63,6 @@ extern "C" {
 число машинных слов.
 
 \pre Вспомогательный буфер stack не пересекается с другими буферами.
-
-\safe todo
 *******************************************************************************
 */
 
@@ -188,7 +186,7 @@ word zzAddW2(
 	\remark Переставляя операнды, можно проверять не только суммы,
 	но и разности.
 	\return Признак равенства.
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 bool_t zzIsSumEq(
 	const word c[],		/*!< [in] сумма */
@@ -228,7 +226,6 @@ bool_t FAST(zzIsSumWEq)(const word b[], const word a[], size_t n,
 	\endcode
 	\pre Буфер c либо не пересекается, либо совпадает с каждым из буферов a, b.
 	\return Слово заема borrow.
-	\safe todo
 */
 word zzSub(
 	word c[],			/*!< [out] разность */
@@ -245,7 +242,6 @@ word zzSub(
 	\endcode
 	\pre Буфер c либо не пересекается, либо совпадает с каждым из буферов a, b.
 	\return Слово заема borrow.
-	\safe todo
 */
 word zzSub2(
 	word b[],			/*!< [in/out] уменьшаемое / разность */
@@ -371,6 +367,9 @@ void zzMul(
 
 size_t zzMul_deep(size_t n, size_t m);
 
+size_t zzMulADK(word c[], const word a[], const word b[], size_t n, void* stack);
+
+
 /*!	\brief Возведение числа в квадрат
 
 	Определяется квадрат [2n]b числа [n]a:
@@ -452,7 +451,6 @@ word zzModW(
 	\return Остаток от деления r.
 	\remark Функция zzModW2() работает быстрее zzModW() на тех платформах,
 	где деление не менее чем в 2 раза медленнее умножения.
-	\safe todo
 */
 word zzModW2(
 	const word a[],		/*!< [in] делимое */
@@ -473,7 +471,7 @@ word zzModW2(
 	\pre Буферы q и r не пересекаются.
 	\pre Буфер r либо не пересекается с буфером a, либо r == a.
 	\deep{stack} zzDiv_deep(n, m).
-	\safe todo
+	\safe Функция нерегулярна.
 */
 void zzDiv(
 	word q[],			/*!< [out] частное */
@@ -496,7 +494,7 @@ size_t zzDiv_deep(size_t n, size_t m);
 	\pre m > 0 && b[m - 1] != 0.
 	\pre Буфер r либо не пересекается с буфером a, либо r == a.
 	\deep{stack} zzMod_deep(n, m).
-	\safe todo
+	\safe Функция нерегулярна.
 */
 void zzMod(
 	word r[],			/*!< [out] остаток */
@@ -562,7 +560,7 @@ size_t zzIsCoprime_deep(size_t n, size_t m);
 
 /*!	\brief Наименьшее общее кратное
 
-	Определяется наименьшее общее кратное [max(n, m)]d чисел [n]a и [m]b:
+	Определяется наименьшее общее кратное [n + m]d чисел [n]a и [m]b:
 	\code
 		d <- \lcm[a, b].
 	\endcode
@@ -658,7 +656,7 @@ size_t zzJacobi_deep(size_t n, size_t m);
 	\pre a < mod && b < mod.
 	\pre Буфер c либо не пересекается, либо совпадает с каждым из буферов a, b.
 	\pre Буфер с не пересекается с буфером mod.
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzAddMod(
 	word c[],			/*!< [out] сумма */
@@ -667,6 +665,9 @@ void zzAddMod(
 	const word mod[],	/*!< [in] модуль */
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
+
+void FAST(zzAddMod)(word c[], const word a[], const word b[], const word mod[], 
+	size_t n);
 
 /*!	\brief Сложение числа со словом по модулю
 
@@ -677,7 +678,7 @@ void zzAddMod(
 	\pre a < mod && w < mod.
 	\pre Буфер b либо не пересекается, либо совпадает с буфером a.
 	\pre Буфер b не пересекается с буфером mod.
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzAddWMod(
 	word b[],			/*!< [out] сумма */
@@ -686,6 +687,9 @@ void zzAddWMod(
 	const word mod[],	/*!< [in] модуль */
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
+
+void FAST(zzAddWMod)(word b[], const word a[], register word w, 
+	const word mod[], size_t n);
 
 /*!	\brief Вычитание чисел по модулю
 
@@ -697,7 +701,7 @@ void zzAddWMod(
 	\pre a < mod && b < mod.
 	\pre Буфер c либо не пересекается, либо совпадает с каждым из буферов a, b.
 	\pre Буфер с не пересекается с буфером mod.
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzSubMod(
 	word c[],			/*!< [out] разность */
@@ -706,6 +710,9 @@ void zzSubMod(
 	const word mod[],	/*!< [in] модуль */
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
+
+void FAST(zzSubMod)(word c[], const word a[], const word b[], 
+	const word mod[], size_t n);
 
 /*!	\brief Вычитание из числа слова по модулю
 
@@ -716,7 +723,7 @@ void zzSubMod(
 	\pre a < mod && w < mod.
 	\pre Буфер b либо не пересекается, либо совпадает с буфером a.
 	\pre Буфер b не пересекается с буфером mod.
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzSubWMod(
 	word b[],			/*!< [out] разность */
@@ -725,6 +732,9 @@ void zzSubWMod(
 	const word mod[],	/*!< [in] модуль */
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
+
+void FAST(zzSubWMod)(word b[], const word a[], register word w, 
+	const word mod[], size_t n);
 
 /*!	\brief Аддитивное обращение чисел по модулю
 
@@ -736,7 +746,7 @@ void zzSubWMod(
 	\pre a < mod.
 	\pre Буфер b либо не пересекается, либо совпадает с буфером a.
 	\pre Буфер b не пересекается с буфером mod.
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzNegMod(
 	word b[],			/*!< [in/out] обратное число */
@@ -744,6 +754,8 @@ void zzNegMod(
 	const word mod[],	/*!< [in] модуль */
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
+
+void FAST(zzNegMod)(word b[], const word a[], const word mod[], size_t n);
 
 /*!	\brief Умножение чисел по модулю
 
@@ -845,7 +857,7 @@ size_t zzDivMod_deep(size_t n);
 	\pre a < mod.
 	\pre Буфер b либо не пересекается, либо совпадает с буфером a.
 	\pre Буфер b не пересекается с буфером mod.
-	\safe todo
+	\safe Имеется ускоренная нерегулярная реализация.
 */
 void zzDoubleMod(
 	word b[],			/*!< [out] произведение */
@@ -853,6 +865,8 @@ void zzDoubleMod(
 	const word mod[],	/*!< [in] модуль */
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
+
+void FAST(zzDoubleMod)(word b[], const word a[], const word mod[], size_t n);
 
 /*!	\brief Половина числа по модулю
 
@@ -864,7 +878,7 @@ void zzDoubleMod(
 	\pre a < mod.
 	\pre Буфер b либо не пересекается, либо совпадает с буфером a.
 	\pre Буфер b не пересекается с буфером mod.
-	\safe todo
+	\safe Имеется ускоренная нерегулярная реализация.
 */
 void zzHalfMod(
 	word b[],			/*!< [out] частное */
@@ -872,6 +886,8 @@ void zzHalfMod(
 	const word mod[],	/*!< [in] модуль */
 	size_t n			/*!< [in] длина чисел в машинных словах */
 );
+
+void FAST(zzHalfMod)(word b[], const word a[], const word mod[], size_t n);
 
 /*!	\brief Почти-обращение по модулю
 
@@ -922,7 +938,9 @@ size_t zzAlmostInvMod_deep(size_t n);
 	определенный порог d, будет возвращен отрицательный результат. Порог d 
 	выбирается так, что вероятность события "для генерации потребуется d 
 	истинно случайных октетов" не превосходит 2^{-B_PER_IMPOSSIBLE}.
-	\safe todo
+	\safe Время выполнения может флуктуировать. По времени выполнения можно 
+	судить о выходных данных rng, но не тех, которые используются для 
+	формирования a.
 */
 bool_t zzRandMod(
 	word a[],			/*!< [out] случайное число */
@@ -946,7 +964,9 @@ bool_t zzRandMod(
 		O_OF_B(l) * 2^l / (mod - 1) \leq 2^l / (2^{l - 1} - 1) O_OF_B(l)
 	случайных октетов rng в среднем. 
 	\remark Повторяется последнее замечание по функции zzRandMod().
-	\safe todo
+	\safe Время выполнения может флуктуировать. По времени выполнения можно 
+	судить о выходных данных rng, но не тех, которые используются для 
+	формирования a.
 */
 bool_t zzRandNZMod(
 	word a[],			/*!< [out] случайное число */
@@ -977,6 +997,7 @@ bool_t zzRandNZMod(
 	\pre n >= 1 && mod[n - 1] != 0.
 	\pre Буферы a и mod не пересекаются.
 	\deep{stack} zzRed_deep(n).
+	\safe Функция нерегулярна.
 */
 void zzRed(
 	word a[],					/*!< [in/out] делимое / остаток */
@@ -995,7 +1016,7 @@ size_t zzRed_deep(size_t n);
 	\pre Модуль mod имеет вид B^n - c, где 0 < c < B.
 	\pre Буферы a и mod не пересекаются.
 	\deep{stack} zzRedCrand_deep(n).
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzRedCrand(
 	word a[],					/*!< [in/out] делимое / остаток */
@@ -1004,9 +1025,11 @@ void zzRedCrand(
 	void* stack					/*!< [in] вспомогательная память (не исп.) */
 );
 
+void FAST(zzRedCrand)(word a[], const word mod[], size_t n, void* stack);
+
 size_t zzRedCrand_deep(size_t n);
 
-/*!	\brief Параметр Барретта
+/*!	\brief Инициализация редукции Барретта
 
 	По модулю [n]mod определяется параметр [n + 2]barr_param:
 	\code
@@ -1015,16 +1038,16 @@ size_t zzRedCrand_deep(size_t n);
 	Этот параметр используется в редукции Барретта.
 	\pre n > 0 && mod[n] != 0.
 	\pre Буферы barr_param и mod не пересекаются.
-	\deep{stack} zzCalcBarrParam_deep(n).
+	\deep{stack} zzRedBarrStart_deep(n).
 */
-void zzCalcBarrParam(
+void zzRedBarrStart(
 	word barr_param[],			/*!< [out] параметр Барретта */
 	const word mod[],			/*!< [in] модуль */
 	size_t n,					/*!< [in] длина mod в машинных словах */
 	void* stack					/*!< [in] вспомогательная память */
 );
 
-size_t zzCalcBarrParam_deep(size_t n);
+size_t zzRedBarrStart_deep(size_t n);
 
 /*!	\brief Редукция Барретта
 
@@ -1032,9 +1055,9 @@ size_t zzCalcBarrParam_deep(size_t n);
 	При вычислениях используется параметр Барретта [n + 2]barr_param.
 	\pre n > 0 && mod[n - 1] != 0.
 	\pre Буфер a не пересекается с буфером mod.
-	\expect barr_param рассчитан с помощью функции zzCalcBarrParam().
+	\expect barr_param рассчитан с помощью функции zzRedBarrStart().
 	\deep{stack} zzRedBarr_deep(n).
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzRedBarr(
 	word a[],					/*!< [in/out] делимое / остаток */
@@ -1044,21 +1067,10 @@ void zzRedBarr(
 	void* stack					/*!< [in] вспомогательная память */
 );
 
+void FAST(zzRedBarr)(word a[], const word mod[], size_t n, 
+	const word barr_param[], void* stack);
+
 size_t zzRedBarr_deep(size_t n);
-
-/*!	\brief Параметр Монтгомери
-
-	Для заданного машинного слова mod0 определяется параметр 
-	\code
-		mont_param <- - mod0^{-1} \mod B,
-	\endcode
-	который используется в редукции Монтгомери.
-	\pre mod0 -- нечетное.
-	\return mont_param.
-*/
-word zzCalcMontParam(
-	register word mod0		/*!< [in] входное слово (первое слово модуля) */
-);
 
 /*!	\brief Редукция Монтгомери
 
@@ -1070,13 +1082,13 @@ word zzCalcMontParam(
 	При вычислениях используется параметр Монтгомери mont_param.
 	\pre mod -- нечетное && mod[n - 1] != 0.
 	\pre a < mod * R.
-	\pre mont_param рассчитан с помощью функции zzCalcMontParam().
+	\pre mont_param рассчитан с помощью функции wordNegInv().
 	\pre Буфер a не пересекается с буфером mod.
 	\remark Редукция предложена в статье [Montgomery P. L. Modular
 	multiplication without trial division. Mathematics of Computation,
 	44(170): 519–521, 1985].
 	\deep{stack} zzRedMont_deep(n).
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzRedMont(
 	word a[],					/*!< [in/out] входное число / результат */
@@ -1085,6 +1097,9 @@ void zzRedMont(
 	register word mont_param,	/*!< [in] параметр Монтгомери */
 	void* stack					/*!< [in] вспомогательная память */
 );
+
+void FAST(zzRedMont)(word a[], const word mod[], size_t n, 
+	register word mont_param, void* stack);
 
 size_t zzRedMont_deep(size_t n);
 
@@ -1098,10 +1113,10 @@ size_t zzRedMont_deep(size_t n);
 	При вычислениях используется параметр Монтгомери mont_param.
 	\pre n >= 2 && mod -- нечетное && mod имеет вид B^n - c, где 0 < c < B.
 	\pre a < mod * R.
-	\pre mont_param рассчитан с помощью функции zzCalcMontParam().
+	\pre mont_param рассчитан с помощью функции wordNegInv().
 	\pre Буфер a не пересекается с буфером mod.
 	\deep{stack} zzRedCrandMont_deep(n).
-	\safe todo
+	\safe Имеется ускоренная нерегулярная редакция.
 */
 void zzRedCrandMont(
 	word a[],					/*!< [in/out] входное число / результат */
@@ -1110,6 +1125,9 @@ void zzRedCrandMont(
 	register word mont_param,	/*!< [in] параметр Монтгомери */
 	void* stack					/*!< [in] вспомогательная память */
 );
+
+void FAST(zzRedCrandMont)(word a[], const word mod[], size_t n, 
+	register word mont_param, void* stack);
 
 size_t zzRedCrandMont_deep(size_t n);
 
@@ -1160,7 +1178,6 @@ word zzPowerModW(
 );
 
 size_t zzPowerModW_deep();
-
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -3,9 +3,9 @@
 \file g12s.c
 \brief GOST R 34.10-94 (Russia): digital signature algorithms
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.09
-\version 2015.05.22
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -47,7 +47,7 @@ typedef size_t (*g12s_deep_i)(
 
 static const char _a1_name[] = "1.2.643.2.2.35.0";
 
-static const uint32 _a1_l = 256;
+static const u32 _a1_l = 256;
 
 static const octet _a1_p[] = {
 	0x31, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -95,7 +95,7 @@ static const octet _a1_yP[] = {
 
 static const char _cryptoproA_name[] = "1.2.643.2.2.35.1";
 
-static const uint32 _cryptoproA_l = 256;
+static const u32 _cryptoproA_l = 256;
 
 static const octet _cryptoproA_p[] = {
 	0x97, 0xFD, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -143,7 +143,7 @@ static const octet _cryptoproA_yP[] = {
 
 static const char _cryptoproB_name[] = "1.2.643.2.2.35.2";
 
-static const uint32 _cryptoproB_l = 256;
+static const u32 _cryptoproB_l = 256;
 
 static const octet _cryptoproB_p[] = {
 	0x99, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -194,7 +194,7 @@ static const octet _cryptoproB_yP[] = {
 
 static const char _cryptoproC_name[] = "1.2.643.2.2.35.3";
 
-static const uint32 _cryptoproC_l = 256;
+static const u32 _cryptoproC_l = 256;
 
 static const octet _cryptoproC_p[] = {
 	0x9B, 0x75, 0x2D, 0x02, 0xB9, 0xF7, 0x98, 0x79,
@@ -242,7 +242,7 @@ static const octet _cryptoproC_yP[] = {
 
 static const char _cryptocom_name[] = "1.2.643.2.9.1.8.1";
 
-static const uint32 _cryptocom_l = 256;
+static const u32 _cryptocom_l = 256;
 
 static const octet _cryptocom_p[] = {
 	0xC7, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -293,7 +293,7 @@ static const octet _cryptocom_yP[] = {
 
 static const char _a2_name[] = "1.2.643.7.1.2.1.2.0";
 
-static const uint32 _a2_l = 512;
+static const u32 _a2_l = 512;
 
 static const octet _a2_p[] = {
 	0x73, 0x63, 0xBE, 0x28, 0xF5, 0xBB, 0x64, 0x16, 
@@ -365,7 +365,7 @@ static const octet _a2_yP[] = {
 
 static const char _paramsetA512_name[] = "1.2.643.7.1.2.1.2.1";
 
-static const uint32 _paramsetA512_l = 512;
+static const u32 _paramsetA512_l = 512;
 
 static const octet _paramsetA512_p[] = {
 	0xC7, 0xFD, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -437,7 +437,7 @@ static const octet _paramsetA512_yP[] = {
 
 static const char _paramsetB512_name[] = "1.2.643.7.1.2.1.2.2";
 
-static const uint32 _paramsetB512_l = 512;
+static const u32 _paramsetB512_l = 512;
 
 static const octet _paramsetB512_p[] = {
 	0x6F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -632,7 +632,7 @@ static err_t g12sCreateEc(
 			ecCreateGroup_deep(f_deep),
 			deep(n, f_deep, ec_d, ec_deep)));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// создать поле
 	f = (qr_o*)((octet*)state + ec_keep);
 	stack = (octet*)f + f_keep;
@@ -796,7 +796,7 @@ err_t g12sGenKeypair(octet privkey[], octet pubkey[],
 		return ERR_BAD_PARAMS;
 	}
 	// выгрузить ключи
-	memFromWord(privkey, mo, d);
+	wwTo(privkey, mo, d);
 	qrTo(pubkey, ecX(Q), ec->f, stack);
 	qrTo(pubkey + ec->f->no, ecY(Q, ec->f->n), ec->f, stack);
 	// все нормально
@@ -861,7 +861,7 @@ err_t g12sSign(octet sig[], const g12s_params* params, const octet hash[],
 	s = r + m;
 	stack = s + m;
 	// загрузить d
-	memToWord(d, privkey, mo);
+	wwFrom(d, privkey, mo);
 	if (wwIsZero(d, m) || 
 		wwCmp(d, ec->order, m) >= 0)
 	{
@@ -871,7 +871,7 @@ err_t g12sSign(octet sig[], const g12s_params* params, const octet hash[],
 	// e <- hash \mod q
 	memCopy(e, hash, mo);
 	memRev(e, mo);
-	memToWord(e, e, mo);
+	wwFrom(e, e, mo);
 	zzMod(e, e, m, ec->order, m, stack);
 	// e == 0 => e <- 1
 	if (wwIsZero(e, m))
@@ -892,7 +892,7 @@ gen_k:
 	}
 	// r <- x_C \mod q
 	qrTo((octet*)C, ecX(C), ec->f, stack);
-	memToWord(r, C, ec->f->no);
+	wwFrom(r, C, ec->f->no);
 	zzMod(r, r, ec->f->n, ec->order, m, stack);
 	// r == 0 => повторить генерацию k
 	if (wwIsZero(r, m))
@@ -902,8 +902,8 @@ gen_k:
 	zzMulMod(s, r, d, ec->order, m, stack);
 	zzAddMod(s, s, k, ec->order, m);
 	// выгрузить ЭЦП
-	memFromWord(sig, mo, s);
-	memFromWord(sig + mo, mo, r);
+	wwTo(sig, mo, s);
+	wwTo(sig + mo, mo, r);
 	memRev(sig, 2 * mo);
 	// все нормально
 	g12sCloseEc(ec);
@@ -970,10 +970,10 @@ err_t g12sVerify(const g12s_params* params, const octet hash[],
 	// загрузить r и s
 	memCopy(s, sig + mo, mo);
 	memRev(s, mo);
-	memToWord(s, s, mo);
+	wwFrom(s, s, mo);
 	memCopy(r, sig, mo);
 	memRev(r, mo);
-	memToWord(r, r, mo);
+	wwFrom(r, r, mo);
 	if (wwIsZero(s, m) || 
 		wwIsZero(r, m) || 
 		wwCmp(s, ec->order, m) >= 0 ||
@@ -985,7 +985,7 @@ err_t g12sVerify(const g12s_params* params, const octet hash[],
 	// e <- hash \mod q
 	memCopy(e, hash, mo);
 	memRev(e, mo);
-	memToWord(e, e, mo);
+	wwFrom(e, e, mo);
 	zzMod(e, e, m, ec->order, m, stack);
 	// e == 0 => e <- 1
 	if (wwIsZero(e, m))
@@ -1005,7 +1005,7 @@ err_t g12sVerify(const g12s_params* params, const octet hash[],
 	}
 	// s <- x_Q \mod q [x_R \mod q]
 	qrTo((octet*)Q, ecX(Q), ec->f, stack);
-	memToWord(Q, Q, ec->f->no);
+	wwFrom(Q, Q, ec->f->no);
 	zzMod(s, Q, ec->f->n, ec->order, m, stack);
 	// s == r?
 	code = wwEq(r, s, m) ? ERR_OK : ERR_BAD_SIG;

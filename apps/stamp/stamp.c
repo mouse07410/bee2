@@ -3,9 +3,9 @@
 \file stamp.c
 \brief Integrity control of Windows PE Executables
 \project bee2/apps/stamp
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2011.10.18
-\version 2015.05.19
+\version 2017.01.12
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -71,7 +71,7 @@ void stampUsage(const char* prg_name)
 	-	1 -- create;
 	-	-1 -- ошибка синтаксиса. 
 */
-int stampParsing(int argc, char* argv[])
+int stampParsing(int argc, const char* argv[])
 {
 	// проверяем число аргументов
 	if (argc != 3)
@@ -129,7 +129,7 @@ void stampSet(const char* name)
 	}
 	// проецировать файл в память
 	hMapping = CreateFileMappingA(hFile, NULL, PAGE_READWRITE, 0, 0, NULL);
-	if (hMapping == INVALID_HANDLE_VALUE)
+	if (hMapping == NULL)
 	{
 		CloseHandle(hFile);
 		printf("Error processing the file \"%s\".\n", name);
@@ -155,7 +155,7 @@ void stampSet(const char* name)
 		return;
 	}
 	// подготовить место для контрольной характеристики
-	ASSERT(STAMP_SIZE >= 32);
+	CASSERT(STAMP_SIZE >= 32);
 	memSetZero(image + offset, STAMP_SIZE);
 	// стек хэширования
 	hash_state = blobCreate(beltHash_keep());
@@ -209,7 +209,7 @@ void stampCheck(const char* name)
 	}
 	// проецировать файл в память
 	hMapping = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
-	if (hMapping == INVALID_HANDLE_VALUE)
+	if (hMapping == NULL)
 	{
 		CloseHandle(hFile);
 		printf("Error processing the file \"%s\".\n", name);
@@ -235,7 +235,7 @@ void stampCheck(const char* name)
 		return;
 	}
 	// подготовить место для контрольной характеристики
-	ASSERT(STAMP_SIZE >= 32);
+	CASSERT(STAMP_SIZE >= 32);
 	memSet(stamp, 0, STAMP_SIZE);
 	// состояние хэширования
 	hash_state = blobCreate(beltHash_keep());

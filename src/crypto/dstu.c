@@ -3,9 +3,9 @@
 \file dstu.c
 \brief DSTU 4145-2002 (Ukraine): digital signature algorithms
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.27
-\version 2015.06.08
+\version 2016.04.22
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -48,7 +48,7 @@ typedef size_t (*_dstu_deep_i)(
 
 static const char _curve163pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.0";
 
-static uint16 _curve163pb_p[4] = {163, 7, 6, 3};
+static u16 _curve163pb_p[4] = {163, 7, 6, 3};
 
 static octet _curve163pb_A = 1;
 
@@ -85,7 +85,7 @@ static octet _curve163pb_P[] = {
 
 static const char _curve167pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.1";
 
-static uint16 _curve167pb_p[4] = {167, 6};
+static u16 _curve167pb_p[4] = {167, 6};
 
 static octet _curve167pb_A = 1;
 
@@ -111,7 +111,7 @@ static octet _curve167pb_c = 2;
 
 static const char _curve173pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.2";
 
-static uint16 _curve173pb_p[4] = {173, 10, 2, 1};
+static u16 _curve173pb_p[4] = {173, 10, 2, 1};
 
 static octet _curve173pb_A = 0;
 
@@ -137,7 +137,7 @@ static octet _curve173pb_c = 4;
 
 static const char _curve179pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.3";
 
-static uint16 _curve179pb_p[4] = {179, 4, 2, 1};
+static u16 _curve179pb_p[4] = {179, 4, 2, 1};
 
 static octet _curve179pb_A = 1;
 
@@ -163,7 +163,7 @@ static octet _curve179pb_c = 2;
 
 static const char _curve191pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.4";
 
-static uint16 _curve191pb_p[4] = {191, 9};
+static u16 _curve191pb_p[4] = {191, 9};
 
 static octet _curve191pb_A = 1;
 
@@ -189,7 +189,7 @@ static octet _curve191pb_c = 2;
 
 static const char _curve233pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.5";
 
-static uint16 _curve233pb_p[4] = {233, 9, 4, 1};
+static u16 _curve233pb_p[4] = {233, 9, 4, 1};
 
 static octet _curve233pb_A = 1;
 
@@ -217,7 +217,7 @@ static octet _curve233pb_c = 2;
 
 static const char _curve257pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.6";
 
-static uint16 _curve257pb_p[4] = {257, 12};
+static u16 _curve257pb_p[4] = {257, 12};
 
 static octet _curve257pb_A = 0;
 
@@ -246,7 +246,7 @@ static octet _curve257pb_c = 4;
 
 static const char _curve307pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.7";
 
-static uint16 _curve307pb_p[4] = {307, 8, 4, 2};
+static u16 _curve307pb_p[4] = {307, 8, 4, 2};
 
 static octet _curve307pb_A = 1;
 
@@ -276,7 +276,7 @@ static octet _curve307pb_c = 2;
 
 static const char _curve367pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.8";
 
-static uint16 _curve367pb_p[4] = {367, 21};
+static u16 _curve367pb_p[4] = {367, 21};
 
 static octet _curve367pb_A = 1;
 
@@ -309,7 +309,7 @@ static octet _curve367pb_c = 2;
 
 static const char _curve431pb_name[] = "1.2.804.2.1.1.1.1.3.1.1.1.2.9";
 
-static uint16 _curve431pb_p[4] = {431, 5, 3, 1};
+static u16 _curve431pb_p[4] = {431, 5, 3, 1};
 
 static octet _curve431pb_A = 1;
 
@@ -469,7 +469,7 @@ static err_t _dstuCreateEc(
 			ecCreateGroup_deep(f_deep),
 			deep(n, f_deep, ec_d, ec_deep)));
 	if (state == 0)
-		return ERR_NOT_ENOUGH_MEMORY;
+		return ERR_OUTOFMEMORY;
 	// создать поле
 	f = (qr_o*)((octet*)state + ec_keep);
 	p = (size_t*)((octet*)f + f_keep);
@@ -618,7 +618,7 @@ err_t dstuGenPoint(octet point[], const dstu_params* params, gen_i rng,
 		// сгенерировать x-координату
 		// [алгоритм из раздела 6.4 ДСТУ --- обрезка x]
 		rng(x, ec->f->no, rng_state);
-		memToWord(x, x, ec->f->no);
+		wwFrom(x, x, ec->f->no);
 		wwTrimHi(x, ec->f->n, gf2Deg(ec->f));
 		// y <- x^2
 		qrSqr(y, x, ec->f, stack);
@@ -874,7 +874,7 @@ err_t dstuGenKeypair(octet privkey[], octet pubkey[],
 	while (1)
 	{
 		rng(d, O_OF_B(order_nb), rng_state);
-		memToWord(d, d, O_OF_B(order_nb));
+		wwFrom(d, d, O_OF_B(order_nb));
 		wwTrimHi(d, order_n, order_nb - 1);
 		ASSERT(wwCmp(d, ec->order, order_n) < 0);
 		// 0 < d?
@@ -891,7 +891,7 @@ err_t dstuGenKeypair(octet privkey[], octet pubkey[],
 	// Q <- -Q
 	ec2NegA(x, x, ec);
 	// выгрузить ключи
-	memFromWord(privkey, order_no, d);
+	wwTo(privkey, order_no, d);
 	qrTo(pubkey, x, ec->f, stack);
 	qrTo(pubkey + ec->f->no, y, ec->f, stack);
 	// все нормально
@@ -982,7 +982,7 @@ step8:
 	while (1)
 	{
 		rng(e, O_OF_B(order_nb), rng_state);
-		memToWord(e, e, O_OF_B(order_nb));
+		wwFrom(e, e, O_OF_B(order_nb));
 		wwTrimHi(e, order_n, order_nb - 1);
 		ASSERT(wwCmp(e, ec->order, order_n) < 0);
 		if (!wwIsZero(e, order_n))
@@ -1003,13 +1003,13 @@ step8:
 	// шаг 10: r <- \bar{y}
 	ASSERT(order_n <= ec->f->n);
 	qrTo((octet*)r, y, ec->f, stack);
-	wwFromMem(r, order_n, r);
+	wwFrom(r, r, order_no);
 	wwTrimHi(r, order_n, order_nb - 1);
 	// шаг 11: если r = 0, то повторить генерацию
 	if (wwIsZero(r, order_n))
 		goto step8;
 	// шаг 12: s <- (e + dr) mod order
-	memToWord(s, privkey, order_no);
+	wwFrom(s, privkey, order_no);
 	zzMulMod(s, s, r, ec->order, order_n, stack);
 	zzAddMod(s, s, e, ec->order, order_n);
 	// шаг 13: если s = 0, то повторить генерацию
@@ -1018,8 +1018,8 @@ step8:
 	// шаг 14: сформировать ЭЦП из r и s
 	// [алгоритм из раздела 5.10 ДСТУ]
 	memSetZero(sig, O_OF_B(ld));
-	memFromWord(sig, order_no, r);
-	memFromWord(sig + ld / 16, order_no, s);
+	wwTo(sig, order_no, r);
+	wwTo(sig + ld / 16, order_no, s);
 	// все нормально
 	_dstuCloseEc(ec);
 	return code;
@@ -1097,8 +1097,8 @@ err_t dstuVerify(const dstu_params* params, size_t ld, const octet hash[],
 	if (qrIsZero(h, ec->f))
 		qrSetUnity(h, ec->f);
 	// шаг 9: выделить части подписи
-	memToWord(r, sig, order_no);
-	memToWord(s, sig + ld / 16, order_no);
+	wwFrom(r, sig, order_no);
+	wwFrom(s, sig + ld / 16, order_no);
 	for (i = order_no; i < ld / 16; ++i)
 		if (sig[i] || sig[i + ld / 16])
 		{
@@ -1125,7 +1125,7 @@ err_t dstuVerify(const dstu_params* params, size_t ld, const octet hash[],
 	// шаг 14: r' <- \bar{y}
 	ASSERT(order_n <= ec->f->n);
 	qrTo((octet*)s, y, ec->f, stack);
-	memToWord(s, s, order_no);
+	wwFrom(s, s, order_no);
 	wwTrimHi(s, order_n, order_nb - 1);
 	// шаг 15:
 	if (!wwEq(r, s, order_n))

@@ -3,9 +3,9 @@
 \file tm.c
 \brief Time and timers
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.05.10
-\version 2015.06.08
+\version 2015.11.25
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -89,8 +89,8 @@ tm_ticks_t tmTicks()
 
 tm_ticks_t tmTicks()
 {
-    register uint32 hi;
-    register uint32 lo;
+    register u32 hi;
+    register u32 lo;
     __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
     return (tm_ticks_t)lo | (tm_ticks_t)hi << 32;
 }
@@ -171,4 +171,27 @@ tm_ticks_t tmFreq()
 size_t tmSpeed(size_t reps, tm_ticks_t ticks)
 {
 	return ticks ? (size_t)((dword)reps * tmFreq() / ticks) : SIZE_MAX;
+}
+
+/*
+*******************************************************************************
+Время
+
+\todo Гарантировать 64-битовый счетчик.
+\todo Поддержать представление времени в формате ISO 8601.
+*******************************************************************************
+*/
+
+tm_time_t tmTime()
+{
+	return time(0);
+}
+
+tm_time_t tmTimeRound(tm_time_t t0, tm_time_t ts)
+{
+	register tm_time_t t = tmTime();
+	if (ts == 0 || t < t0)
+		return TIME_ERR;
+	t = (t - t0) / ts;
+	return t;
 }

@@ -3,9 +3,9 @@
 \file word.h
 \brief Machine words
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.18
-\version 2015.05.28
+\version 2015.11.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -40,43 +40,34 @@ extern "C" {
 [2]	Andersen S.A. Bit Twidding Hacks. Avail. at:
 	http://graphics.stanford.edu/~seander/bithacks.html, 1997-2005.
 
-Вторая редакция [1], дополнительные материалы: http://www.hackersdelight.org/.
+Слово может интерпретироваться как вычет по модулю 2^{B_PER_W}.
+
+\remark Вторая редакция [1], дополнительные материалы: 
+http://www.hackersdelight.org/.
+
+\remark Манипуляции с массивами машинных слов реализованы в модуле ww.
 *******************************************************************************
 */
 
-/*!	\def wordRevU16
-	\brief Реверс октетов слова uint16
-*/
-#define wordRevU16(a)\
-	((uint16)((a) << 8 | (a) >> 8))
+#define WORD_0 ((word)0)
+#define WORD_1 ((word)1)
+#define WORD_MAX ((word)(WORD_0 - WORD_1))
 
-/*!	\def wordRevU32
-	\brief Реверс октетов слова uint32
-*/
-#define wordRevU32(a)\
-	((uint32)((a) << 24 | ((a) & 0xFF00) << 8 |\
-		((a) >> 8 & 0xFF00) | (a) >> 24))
+#define WORD_BIT_POS(pos) (WORD_1 << (pos))
+#define WORD_BIT_HI WORD_BIT_POS(B_PER_W - 1)
+#define WORD_BIT_HALF WORD_BIT_POS(B_PER_W / 2)
 
-/*!	\def wordRevU64
-	\brief Реверс октетов слова uint64
-	\pre Тип uint64 поддержан.
-*/
-#define wordRevU64(a)\
-	((uint64)((a) << 56 | ((a) & 0xFF00) << 40 | ((a) & 0xFF0000) << 24 |\
-	((a) & 0xFF000000) << 8 | ((a) >> 8 & 0xFF000000) |\
-	((a) >> 24 & 0xFF0000) | ((a) >> 40 & 0xFF00) | (a) >> 56))
-
-/*!	\def wordRev
-	\brief Реверс октетов машинного слова
-*/
 #if (B_PER_W == 16)
-	#define wordRev(a) wordRevU16(a)
+	#include "bee2/core/u16.h"
+	#define wordRev u16Rev
 #elif (B_PER_W == 32)
-	#define wordRev(a) wordRevU32(a)
+	#include "bee2/core/u32.h"
+	#define wordRev u32Rev
 #elif (B_PER_W == 64)
-	#define wordRev(a) wordRevU64(a)
+	#include "bee2/core/u64.h"
+	#define wordRev u64Rev
 #else
-	#error "Word size undefined"
+	#error "Unsupported word size"
 #endif /* B_PER_W */
 
 /*!	\brief Вес
@@ -122,6 +113,18 @@ size_t wordCLZ(
 );
 
 size_t FAST(wordCLZ)(register word w);
+
+/*!	\brief Аддитивно-мультипликативное обращение
+
+	Выполняется адиттивное и мультипликативное обращение 
+	слова-как-числа w по модулю 2^B_PER_W.
+	\pre w -- нечетное.
+	\return - w^{-1} \mod 2^B_PER_W.
+	\remark Вычисляемое слово используется в редукции Монтгомери.
+*/
+word wordNegInv(
+	register word w		/*!< [in] слово */
+);
 
 /*!
 *******************************************************************************

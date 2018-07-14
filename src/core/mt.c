@@ -3,9 +3,9 @@
 \file mt.c
 \brief Multithreading
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.10
-\version 2014.10.13
+\version 2015.08.27
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -21,7 +21,7 @@ version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 
 bool_t mtMtxCreate(mt_mtx_t* mtx)
 {
@@ -119,9 +119,9 @@ void mtMtxClose(mt_mtx_t* mtx)
 *******************************************************************************
 */
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 
-void mtSleep(uint32 ms)
+void mtSleep(u32 ms)
 {
 	Sleep(ms);
 }
@@ -130,7 +130,7 @@ void mtSleep(uint32 ms)
 
 #include <time.h>
 
-void mtSleep(uint32 ms)
+void mtSleep(u32 ms)
 {
 	struct timespec ts;
 	ts.tv_sec = (time_t)ms, ts.tv_sec /= 1000;
@@ -141,7 +141,7 @@ void mtSleep(uint32 ms)
 
 #else
 
-void mtSleep(uint32 ms)
+void mtSleep(u32 ms)
 {
 }
 

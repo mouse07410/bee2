@@ -3,15 +3,16 @@
 \file word.c
 \brief Machine words
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.07.18
-\version 2015.04.06
+\version 2015.10.29
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
 */
 
-#include "bee2/math/word.h"
+#include "bee2/core/word.h"
+#include "bee2/core/util.h"
 
 /*
 *******************************************************************************
@@ -145,3 +146,42 @@ size_t FAST(wordCLZ)(register word w)
 	t = 0;
 	return (w >> 1) ? l - 2 : l - (w ? 1 : 0);
 }
+
+/*
+*******************************************************************************
+Аддитивно-мультипликативное обращение
+
+Используется то факт, что B_PER_W = 2^k, где k = 4, 5 или 6. Корректность 
+алгоритма, реализованного в wordNegInv(),
+обосновывается следующим образом: 
+	если c_t = - m^{-1} \mod 2^{2^t} и 
+		c_{t+1} = c_t(c_t m + 2) \mod 2^{2^{t+1}},
+	то
+		с_{t+1} m = c_t m (c_t m + 2) = 
+			(2^{2^t}r - 1)(2^{2^t}r + 1) =
+			2^{2^{t+1}}r^2 - 1 => 
+				c_{t+1} = m^{-1}2^{2^{t+1}}
+*******************************************************************************
+*/
+
+word wordNegInv(register word w)
+{
+	register word ret = w;
+	ASSERT(w & 1);
+	// для t = 1,...,k: ret <- ret * (w * ret + 2)
+#if (B_PER_W >= 16)
+	ret = ret * (w * ret + 2);
+	ret = ret * (w * ret + 2);
+	ret = ret * (w * ret + 2);
+	ret = ret * (w * ret + 2);
+#endif
+#if (B_PER_W >= 32)
+	ret = ret * (w * ret + 2);
+#endif
+#if (B_PER_W == 64)
+	ret = ret * (w * ret + 2);
+#endif
+	w = 0;
+	return ret;
+}
+

@@ -3,9 +3,9 @@
 \file util.h
 \brief Utilities
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.16
-\version 2015.04.25
+\version 2017.01.17
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -21,7 +21,6 @@ version 3. See Copyright Notices in bee2/info.h.
 #ifndef __BEE2_UTIL_H
 #define __BEE2_UTIL_H
 
-#include <assert.h>
 #include "bee2/defs.h"
 
 #ifdef __cplusplus
@@ -42,17 +41,36 @@ extern "C" {
 */
 #define LAST_OF(a) ((a)[COUNT_OF(a) - 1])
 
+/*!	\brief Компиляция с проверкой условия
+	
+	Для отладочной версии вычислить e и завершить компиляцию, если e == 0.
+*/
+#ifdef NDEBUG
+	#define CASSERT(e) ((void)0)
+#else
+	#define CASSERT(e) ((void)sizeof(char[1 - 2 * !(e)]))
+#endif
+
 /*!	\brief Предполагается выполнение условия
 	
-	Вычислить a (при отладке) и завершить работу, если a == 0 (при отладке). 
+	Для отладочной версии вычислить e и завершить выполнение, если e == 0.
+	\remark Используется собственная редакция макроса assert(). В стандартной 
+	редакции есть проверка условия. При правильной работе программы условие
+	никогда не выполняется, и анализаторы покрытия тестами могут показывать 
+	только частичное покрытие.
 */
-#define ASSERT(a) assert(a)
+#ifdef NDEBUG
+	#define ASSERT(e) ((void)0)
+#else
+	extern void utilAssert(int e, const char* file, int line);
+	#define ASSERT(e) utilAssert(!!(e), __FILE__, __LINE__)
+#endif
 
 /*!	\brief Проверяется выполнение условия
 
-	Вычислить a (всегда) и завершить работу, если a == 0 (при отладке). 
+	Вычислить e (всегда) и завершить выполнение, если a == 0 (при отладке). 
 */
-#define VERIFY(a) {if (!(a)) ASSERT(0);}
+#define VERIFY(e) {if (!(e)) ASSERT(0);}
 
 /*!	\brief Ожидается выполнение условия
 
@@ -162,10 +180,10 @@ size_t utilMax(
 	При первом обращении состояние state должно быть нулевым.
 	\return Контрольная сумма.
 */
-uint32 utilCRC32(
+u32 utilCRC32(
 	const void* buf,	/*!< [in] буфер */
 	size_t count,		/*!< [in] число октетов */
-	uint32 state		/*!< [in/out] состояние */
+	u32 state			/*!< [in/out] состояние */
 );
 
 /*!	\brief Контрольная сумма FNV32
@@ -179,10 +197,10 @@ uint32 utilCRC32(
 	При первом обращении state должно равняться 2166136261 = 0x811C9DC5.
 	\return Контрольная сумма.
 */
-uint32 utilFNV32(
+u32 utilFNV32(
 	const void* buf,	/*!< [in] буфер */
 	size_t count,		/*!< [in] число октетов */
-	uint32 state		/*!< [in/out] состояние */
+	u32 state			/*!< [in/out] состояние */
 );
 
 /*!	\brief 32-разрядный нонс
@@ -193,7 +211,7 @@ uint32 utilFNV32(
 	которое используется в криптографических протоколах. С помощью нонсов можно
 	инициализовать генераторы псевдослучайных чисел (см. prngCOMBOStart()).
 */
-uint32 utilNonce32();
+u32 utilNonce32();
 
 #ifdef __cplusplus
 } /* extern "C" */

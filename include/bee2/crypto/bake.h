@@ -3,9 +3,9 @@
 \file bake.h
 \brief STB 34.101.66 (bake): key establishment protocols
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.04.14
-\version 2015.04.28
+\version 2016.06.16
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -34,9 +34,9 @@ extern "C" {
 
 \section bake-common СТБ 34.101.66 (bake): Общие положения
 
-Реализованы алгоритмы СТБ 34.101.66 (bake). При ссылках на алгоритмы, таблицы,
-другие объекты подразумеваются разделы СТБ 34.101.66-2014, в которых эти
-объекты определены.
+Реализованы протоколы и алгоритмы СТБ 34.101.66 (bake). При ссылках на 
+протоколы, таблицы, другие объекты подразумеваются разделы СТБ 34.101.66-2014, 
+в которых эти объекты определены.
 
 Долговременные параметры bake повторяют долговременные параметры bign 
 и задаются структурой типа bign_params, описанной в заголовочном файле bign.h. 
@@ -425,7 +425,6 @@ err_t bakeBSTSStep2(
 	\expect bakeBSTSStart() < bakeBSTSStep3().
 	\expect bakeBSTSStep2() << bakeBSTSStep3().
 	\return ERR_OK, если шаг успешно выполнен, и код ошибки в противном случае.
-	\remark Синтаксис [?out_len]out объяснен в defs.h. 
 */
 err_t bakeBSTSStep3(
 	octet out[],			/*!< [out] выходное сообщение M2 */

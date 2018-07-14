@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9,00"
-	Name="beltsum"
+	Name="bsum"
 	ProjectGUID="{FBF42734-F8BB-47D2-B964-1017CB32597D}"
-	RootNamespace="beltsum"
+	RootNamespace="bsum"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -24,7 +24,7 @@
 			OutputDirectory="$(SolutionDir)distrib\$(ConfigurationName)32"
 			IntermediateDirectory="$(SolutionDir)build\$(ConfigurationName)32\$(ProjectName)"
 			ConfigurationType="1"
-			UseOfMFC="1"
+			UseOfMFC="0"
 			CharacterSet="1"
 			>
 			<Tool
@@ -353,7 +353,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\apps\beltsum\beltsum.c"
+				RelativePath="..\..\apps\bsum\bsum.c"
 				>
 			</File>
 		</Filter>

@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.01
-\version 2015.04.23
+\version 2016.07.07
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices at the end of this file.
 *******************************************************************************
@@ -25,19 +25,19 @@ version 3. See Copyright Notices at the end of this file.
 #define BEE2_NAME				"Bee2"
 #define BEE2_VERSION_MAJOR		"2"
 #define BEE2_VERSION_MINOR 		"0"
-#define BEE2_VERSION_PATCH		"2"
+#define BEE2_VERSION_PATCH		"4"
 
 #define BEE2_VERSION\
 		BEE2_VERSION_MAJOR "." BEE2_VERSION_MINOR "." BEE2_VERSION_PATCH
 
 #define BEE2_VERSION_NUM\
-		2, 0, 2
+		2, 0, 4
 
 /*!
 *******************************************************************************
 \mainpage Библиотека Bee2
 
-\version 2.0.2
+\version 2.0.4
 
 \section toc Содержание
 
@@ -94,41 +94,21 @@ version 3. See Copyright Notices at the end of this file.
 \verbatim
 mkdir build
 cd build
-cmake  ..
+cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check}]\
+      [-DBUILD_FAST=ON] ..
 \endverbatim
 
-Конфигурация отладочной версии:
+Конфигурации:
+   
+# Release -- окончательная (по умолчанию);
+# Debug -- отладочная;
+# Coverage -- со средствами мониторинга покрытия;
+# ASan, ASanDbg -- со средствами проверки адресов (AddressSanitizer);
+# MemSan, MemSanDbg -- со средствами проверки памяти (MemorySanitizer);
+# Check -- строгие правила компиляции.
 
-\verbatim
-cmake -DCMAKE_BUILD_TYPE=Debug ..
-\endverbatim
-
-Конфигурация со средствами мониторинга покрытия:
-
-\verbatim
-cmake -DCMAKE_BUILD_TYPE=Coverage ..
-\endverbatim
-
-Конфигурация со средствами проверки адресов (AddressSanitizer):
-
-\verbatim
-cmake -DCMAKE_BUILD_TYPE=ASan ..
-cmake -DCMAKE_BUILD_TYPE=ASanDbg ..
-\endverbatim
-
-Конфигурация со средствами проверки памяти (MemorySanitizer):
-
-\verbatim
-cmake -DCMAKE_BUILD_TYPE=MemSan ..
-cmake -DCMAKE_BUILD_TYPE=MemSanDbg ..
-\endverbatim
-
-Конфигурация со строгой компиляцией:
-
-\verbatim
-cmake -DCMAKE_BUILD_TYPE=Check ..
-cmake -DCMAKE_BUILD_TYPE=CheckFull ..
-\endverbatim
+Опция BUILD_FAST (по умолчанию отключена) переключает между безопасными 
+(constant-time) и быстрыми (non-constant-time) редакциями функций.
 
 Компиляция и линковка:
 

@@ -3,9 +3,9 @@
 \file mt.h
 \brief Multithreading
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.10
-\version 2014.10.13
+\version 2017.01.11
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -59,7 +59,7 @@ mtxLock() и снимает блокировку с помощью функци�
 *******************************************************************************
 */
 
-#ifdef OS_WINDOWS
+#ifdef OS_WIN
 	#include <windows.h>
 	typedef HANDLE mt_mtx_t;
 #elif defined(OS_UNIX) || defined(__APPLE__)
@@ -109,7 +109,9 @@ void mtMtxUnlock(
 /*!	\brief Закрытие мьютекса
 
 	Мьютекс mtx закрывается.
-	\pre Мьютекс корректен.
+	\pre Мьютекс корректен и не заблокирован.
+	\remark Закрытие заблокированного мьютекса может привести к непредсказуемым
+	последствиям.
 */
 void mtMtxClose(
 	mt_mtx_t* mtx		/*!< [in] мьютекс */
@@ -134,7 +136,7 @@ void mtMtxClose(
 	не поддерживает многозадачность, то приостановки не будет.
 */
 void mtSleep(
-	uint32 ms		/*!< [in] число миллисекунд */
+	u32 ms		/*!< [in] число миллисекунд */
 );
 
 #ifdef __cplusplus

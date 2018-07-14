@@ -3,9 +3,9 @@
 \file brng.h
 \brief STB 34.101.47 (brng): algorithms of pseudorandom number generation
 \project bee2 [cryptographic library]
-\author (С) Sergey Agievich [agievich@{bsu.by|gmail.com}]
+\author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2013.01.31
-\version 2014.10.20
+\version 2018.07.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -99,7 +99,7 @@ size_t brngCTR_keep();
 
 /*!	\brief Инициализация режима CTR
 
-	По ключу theta и синхропосылке iv в state формируются структуры данных, 
+	По ключу key и синхропосылке iv в state формируются структуры данных, 
 	необходимые для генерации псевдослучайных чисел в режиме CTR. 
 	\pre По адресу state зарезервировано brngCTR_keep() октетов.
 	\warning При многократном вызове функции с одним и тем же ключом должны
@@ -110,7 +110,7 @@ size_t brngCTR_keep();
 */
 void brngCTRStart(
 	void* state,			/*!< [out] состояние */
-	const octet theta[32],	/*!< [in] ключ */
+	const octet key[32],	/*!< [in] ключ */
 	const octet iv[32]		/*!< [in] синхропосылка */
 );
 
@@ -130,7 +130,13 @@ void brngCTRStart(
 	дополняясь нулевыми октетами.
 	\remark Если работает буферизация и возвращаются данные сгенерированного
 	ранее блока, то соответствующие октеты buf не используются
-	для формирования слова X, эти октеты пропускаются.
+	для формирования слова X, эти октеты пропускаются. Поэтому, в частности,
+	строки
+	\code 
+		brngCTRStepR(buf + 16, 16, state), brngCTRStepR(buf + 16, 16, state);
+		brngCTRStepR(buf, 32, state);
+	\endcode
+	вызываемые сразу после brngCTRStart(), не эквивалентны друг другу.
 */
 void brngCTRStepR(
 	void* buf,			/*!< [in/out] дополн. / псевдослучайные данные */
@@ -155,7 +161,7 @@ void brngCTRStepG(
 /*!	\brief Генерация в режиме CTR
 
 	В буфер [count]buf записываются псевдослучайные данные,  сгенерированные 
-	в режиме CTR на ключе theta при использовании синхропосылки iv. 
+	в режиме CTR на ключе key при использовании синхропосылки iv. 
 	Дополнительно в iv возвращается обновленная синхропосылка, которую можно 
 	использовать при повторном вызове функции с тем же ключом.
 	\return ERR_OK, если данные успешно сгенерированы, и код ошибки
@@ -171,7 +177,7 @@ void brngCTRStepG(
 err_t brngCTRRand(
 	void* buf,				/*!< [in/out] дополн. / псевдослучайные данные */
 	size_t count,			/*!< [in] число октетов buf */
-	const octet theta[32],	/*!< [in] ключ */
+	const octet key[32],	/*!< [in] ключ */
 	octet iv[32]			/*!< [in/out] первонач. / обновл. синхропосылка */
 );
 
@@ -190,21 +196,22 @@ size_t brngHMAC_keep();
 
 /*!	\brief Инициализация режима HMAC
 
-	По ключу [theta_len]theta и синхропосылке [iv_len]iv октетов
+	По ключу [key_len]key и синхропосылке [iv_len]iv октетов
 	в state формируются структуры данных, необходимые для генерации 
 	псевдослучайных чисел в режиме HMAC.
 	\pre По адресу state зарезервировано brngHMAC_keep() октетов.
-	\expect Буфер iv остается корректным и постоянным вплоть до завершения
-	работы с механизмом.
+	\expect Если длина синхропосылки в октетах (iv_len) больше 64, то буфер iv 
+	остается корректным и постоянным вплоть до завершения работы с механизмом.
 	\warning При многократном вызове функции с одним и тем же ключом должны
 	использоваться различные синхропосылки. При повторе синхропосылок будут
 	повторно сгенерированы те же данные.
 	\remark Рекомендуется использовать ключ из 32 октетов.
+	\remark При iv_len <= 64 содержимое [iv_len]iv сохраняется в state. 
 */
 void brngHMACStart(
 	void* state,			/*!< [out] состояние */
-	const octet theta[],	/*!< [in] ключ */
-	size_t theta_len,		/*!< [in] длина ключа в октетах */
+	const octet key[],		/*!< [in] ключ */
+	size_t key_len,			/*!< [in] длина ключа в октетах */
 	const octet iv[],		/*!< [in] синхропосылка */
 	size_t iv_len			/*!< [in] длина синхропосылки в октетах */
 );
@@ -230,7 +237,7 @@ void brngHMACStepR(
 /*!	\brief Генерация в режиме HMAC
 
 	В буфер [count]buf записываются псевдослучайные данные, сгенерированные 
-	в режиме CTR на ключе [theta_len]theta при использовании 
+	в режиме HMAC на ключе [key_len]key при использовании 
 	синхропосылки [iv_len]iv.
 	\expect{ERR_BAD_INPUT} Буферы buf и iv не пересекаются.
 	\return ERR_OK, если данные успешно сгенерированы, и код ошибки
@@ -244,8 +251,8 @@ void brngHMACStepR(
 err_t brngHMACRand(
 	void* buf,				/*!< [out] выходные данные */
 	size_t count,			/*!< [in] число октетов buf */
-	const octet theta[],	/*!< [in] ключ */
-	size_t theta_len,		/*!< [in] длина ключа в октетах */
+	const octet key[],		/*!< [in] ключ */
+	size_t key_len,			/*!< [in] длина ключа в октетах */
 	const octet iv[],		/*!< [in] синхропосылка */
 	size_t iv_len			/*!< [in] длина синхропосылки в октетах */
 );
