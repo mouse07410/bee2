@@ -25,11 +25,13 @@ set(src
   crypto/bels.c
   crypto/belt/belt_block.c
   crypto/belt/belt_wbl.c
-  crypto/belt/belt_int.c
+  crypto/belt/belt_lcl.c
   crypto/belt/belt_cbc.c
   crypto/belt/belt_cfb.c
+  crypto/belt/belt_compr.c
   crypto/belt/belt_ctr.c
   crypto/belt/belt_dwp.c
+  crypto/belt/belt_che.c
   crypto/belt/belt_ecb.c
   crypto/belt/belt_bde.c
   crypto/belt/belt_sde.c
@@ -78,12 +80,12 @@ if(BUILD_SHARED_LIBS)
     add_library(bee2 SHARED ${src})
   else()
     if(MSVC)
-      # disable the security warnings for sprintf() in bee2.c
+      # disable security warnings for sprintf() in bee2.c
       add_definitions(/D _CRT_SECURE_NO_WARNINGS)
     endif()
     add_library(bee2 SHARED ${src} 
       ../win/bee2.def
-      ../win/bee2.bmp
+      ../img/bee2.bmp
       ../win/bee2.rc
       ../win/bee2.c
     )

@@ -1,11 +1,11 @@
-﻿/*
+/*
 *******************************************************************************
 \file rng.c
 \brief Entropy sources and random number generators
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2014.10.13
-\version 2017.01.11
+\version 2019.07.10
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -19,6 +19,7 @@ version 3. See Copyright Notices in bee2/info.h.
 #include "bee2/core/str.h"
 #include "bee2/core/tm.h"
 #include "bee2/core/rng.h"
+#include "bee2/core/u32.h"
 #include "bee2/core/util.h"
 #include "bee2/core/word.h"
 #include "bee2/crypto/belt.h"
@@ -170,7 +171,7 @@ static err_t rngReadTRNG(size_t* read, void* buf, size_t count)
 *******************************************************************************
 Источник-таймер
 
-Реаилзовано предложение [Jessie Walker, Seeding Random Number Generator]:
+Реализовано предложение [Jessie Walker, Seeding Random Number Generator]:
 наблюдением является разность между показаниями высокоточного таймера
 (регистра RDTSC) при приостановке потока на 0 мс, т.е. при передаче
 управления ядру.
@@ -340,10 +341,9 @@ bool_t rngTestFIPS1(const octet buf[2500])
 	ASSERT(memIsValid(buf, 2500));
 	if (O_OF_W(count) > 2500)
 	{
-		word w;
+		ASSERT(B_PER_W == 64);
+		s = u32Weight(*(const u32*)(buf + 2496));
 		--count;
-		wwFrom(&w, buf + O_OF_W(count), 2500 - O_OF_W(count));
-		s = wordWeight(w);
 	}
 	while (count--)
 		s += wordWeight(((const word*)buf)[count]);

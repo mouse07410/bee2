@@ -60,9 +60,7 @@
 # Math files
 *.nb
 
-# Local files
-backup
+# Specific files
+_docs
 build
-linux
-support
-clear.bat
+clear.cmd

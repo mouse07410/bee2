@@ -17,37 +17,43 @@ Bee2 fully supports the following standards
 
 1. STB 34.101.31 (belt): data encryption and integrity algorithms.
 2. STB 34.101.45 (bign): digital signature and key transport algorithms 
-   based on elliptic curves.
+   over elliptic curves.
 3. STB 34.101.47 (brng): cryptographic algorithms of pseudorandom number 
    generation + one-time passwords.
 4. STB 34.101.60 (bels): secret sharing algorithms.
-5. STB 34.101.66 (bake): key establishment protocols based on elliptic 
-   curves. 
-6. STB 34.101.77 (bash): hashing algorithms. 
+5. STB 34.101.66 (bake): key establishment protocols over elliptic curves. 
+6. STB 34.101.77 (bash): sponge-based algorithms. 
 
 Additionally, Bee2 implements digital signature algorithms standardized in 
 Russia and Ukraine.
 
 Build
 -----
+```
+mkdir build
+cd build
+cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check}]\
+      [-DBUILD_FAST=ON]\
+      [-DBASH_PLATFORM={BASH_32|BASH_64|BASH_AVX2|BASH_AVX512}]\
+      ..
+make
+[make test]
+[make install]
+```
 
-    mkdir build
-    cd build
-    cmake [-DCMAKE_BUILD_TYPE={Release|Debug|Coverage|ASan|ASanDbg|MemSan|MemSanDbg|Check}]\
-          [-DBUILD_FAST=ON] ..
-    make
-    [make test]
-    [make install]
-
-Build types (Release by default):
+Build types (`Release` by default):
    
-*  Coverage -- test coverage,
-*  ASan, ASanDbg -- [address sanitizer](http://en.wikipedia.org/wiki/AddressSanitizer),
-*  MemSan, MemSanDbg -- [memory sanitizer](http://code.google.com/p/memory-sanitizer/),
-*  Check -- strict compile rules.
+*  `Coverage` — test coverage,
+*  `ASan`, `ASanDbg` — [address sanitizer](http://en.wikipedia.org/wiki/AddressSanitizer),
+*  `MemSan`, `MemSanDbg` — [memory sanitizer](http://code.google.com/p/memory-sanitizer/),
+*  `Check` — strict compile rules.
 
-The BUILD_FAST option (OFF by default) switches from safe (constant-time) 
+The `BUILD_FAST` option (`OFF` by default) switches from safe (constant-time) 
 functions to fast (non-constant-time) ones.
+
+The `BASH_PLATFORM` option (`BASH_64` by default) requests to use a specific 
+implementation of the STB 34.101.77 algorithms optimized for a given hardware platform. 
+The request may be rejected if it conflicts with other options.
 
 License
 -------

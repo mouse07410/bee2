@@ -5,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.04.01
-\version 2016.06.16
+\version 2019.06.18
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -47,7 +47,9 @@ version 3. See Copyright Notices in bee2/info.h.
 функциях арифметики возникают с вероятностями, близкими к 1 / 2^B_PER_W.
 
 \remark При разборе платформ для определения порядка октетов использован код
-Брайана Гладмана (Brian Gladman, http://www.gladman.me.uk/).
+Брайана Гладмана (Brian Gladman, http://www.gladman.me.uk/). Дополнительная 
+платформа EMSCRIPTEN (https://emscripten.org) является виртуальной, на ней 
+выполняется компиляция в asm.js. 
 
 \section defs-arrays Массивы
 
@@ -131,12 +133,11 @@ T == octet.
 	defined(__i386__) || defined(_M_I86)  || defined(_M_IX86) ||\
 	defined(_M_IA64) || defined(__ia64__) || defined(_M_X64) ||\
 	defined(_M_AMD64) || defined(__amd64__) || defined(__amd64) ||\
-	defined(__x86_64__) ||\
-	defined(_M_ALPHA) || defined(__alpha__) || defined(__alpha) ||\
-    defined(__arm__) ||\
-    defined(__MIPS__) || defined(__mips__) || defined(__mips) ||\
-	defined(__OS2__) || defined(sun386) || defined(__TURBOC__) ||\
-	defined(vax) || defined(vms) || defined(VMS) || defined(__VMS)
+	defined(__x86_64__) || defined(_M_ALPHA) || defined(__alpha__) ||\
+	defined(__alpha) || defined(__arm__) || defined(__MIPS__) ||\
+	defined(__mips__) || defined(__mips) || defined(__OS2__) ||\
+	defined(sun386) || defined(__TURBOC__) || defined(vax) || defined(vms) ||\
+	defined(VMS) || defined(__VMS) || defined(__EMSCRIPTEN__)
 	#define OCTET_ORDER LITTLE_ENDIAN
 #elif defined(__powerpc__) || defined(__ppc__) || defined(__PPC__) ||\
 	defined(__powerpc64__) || defined(__ppc64__) || defined(__PPC64__) ||\
@@ -530,7 +531,7 @@ typedef err_t (*read_i)(
 \brief Интерфейс записи
 
 Функция интерфейса write_i записывает буфер [count]buf в файл file.
-По адресу written возвращается число прочитанных октетов.
+По адресу written возвращается число записанных в файл октетов.
 \pre Указатель written корректен.
 \pre Буфер buf корректен.
 \pre Файл file корректен.

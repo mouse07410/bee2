@@ -1,4 +1,3 @@
-﻿
 /*
 *******************************************************************************
 \file mem.h
@@ -6,7 +5,7 @@
 \project bee2 [cryptographic library]
 \author (C) Sergey Agievich [agievich@{bsu.by|gmail.com}]
 \created 2012.07.16
-\version 2017.01.12
+\version 2019.07.09
 \license This program is released under the GNU General Public License 
 version 3. See Copyright Notices in bee2/info.h.
 *******************************************************************************
@@ -105,6 +104,15 @@ void memSet(
 /*!	Буфер [count]buf обнуляется. */
 #define memSetZero(buf, count) memSet(buf, 0, count)
 
+/*!	\brief Инвертировать буфер памяти
+
+	Все биты буфера [count]buf инвертируются.
+*/
+void memNeg( 
+	void* buf,			/*< [in/out] буфер */
+	size_t count		/*< [in] число октетов */
+);
+
 /*!	\brief Выделение блока памяти
 	Выделяется блок динамической памяти из count октетов.
 	\return Указатель на блок памяти или 0, если памяти не хватает.
@@ -159,6 +167,17 @@ bool_t memIsValid(
 #define memIsNullOrValid(buf, count)\
 	((buf) == 0 || memIsValid(buf, count))
 
+/*!	\brief Буфер выровнен на границу?
+
+	Проверяется, что buf выровнен на границу size-байтового блока.
+	\return Проверяемый признак.
+*/
+bool_t memIsAligned(
+	const void* buf,	/*!< [in] буфер */
+	size_t size			/*!< [in] длина блока */
+);
+
+
 /*!	\brief Проверка совпадения
 
 	Проверяется, что содержимое буферов [count]buf1 и [count]buf2 совпадает. 
@@ -171,6 +190,7 @@ bool_t memEq(
 	size_t count		/*!< [in] размер буферов */
 );
 
+bool_t SAFE(memEq)(const void* buf1, const void* buf2, size_t count);
 bool_t FAST(memEq)(const void* buf1, const void* buf2, size_t count);
 
 /*!	\brief Сравнение
@@ -191,6 +211,7 @@ int memCmp(
 	size_t count		/*!< [in] размер буферов */
 );
 
+int SAFE(memCmp)(const void* buf1, const void* buf2, size_t count);
 int FAST(memCmp)(const void* buf1, const void* buf2, size_t count);
 
 /*!	\brief Очистить буфер памяти
@@ -200,7 +221,7 @@ int FAST(memCmp)(const void* buf1, const void* buf2, size_t count);
 	используется и включена оптимизация компиляции.
 */
 void memWipe(
-	void* buf,	        /*!< [out] буфер */
+	void* buf,			/*!< [out] буфер */
 	size_t count		/*!< [in] размер буфера */
 );
 
@@ -215,6 +236,7 @@ bool_t memIsZero(
 	size_t count		/*!< [in] размер буфера */
 );
 
+bool_t SAFE(memIsZero)(const void* buf, size_t count);
 bool_t FAST(memIsZero)(const void* buf, size_t count);
 
 /*!	\brief Размер значащей части буфера
@@ -243,6 +265,7 @@ bool_t memIsRep(
 	octet o				/*!< [in] значение */
 );
 
+bool_t SAFE(memIsRep)(const void* buf, size_t count, octet o);
 bool_t FAST(memIsRep)(const void* buf, size_t count, octet o);
 
 /*!	\brief Объединение двух буферов
